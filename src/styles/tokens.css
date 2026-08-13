@@ -1,0 +1,51 @@
+/* Styal Lodge — design tokens. One source of truth for palette, type & spacing. */
+:root {
+  /* Palette */
+  --bg: #F5F2EB;            /* cream background */
+  --ink: #524f4c;          /* body text / dark grey */
+  --ink-strong: #3f3b38;   /* display headings — matches the logo wordmark */
+  --accent: #66705f;       /* sage — actions */
+  --accent-hover: #58604f;
+  --on-accent: #F5F2EB;
+  --surface-dark: #524f4c; /* footer & dark sections */
+  --on-dark: #F5F2EB;
+  --on-dark-muted: #d8d3c8;
+  --hairline: rgba(82, 79, 76, 0.16);
+  --muted: rgba(82, 79, 76, 0.66);
+
+  /* Type — Larken (Adobe Fonts web project shu6iux) */
+  --font-serif: "larken", Georgia, "Times New Roman", serif;
+  --fw-light: 300;
+  --fw-regular: 400;
+  --fw-medium: 500;
+
+  /* Fluid type scale (min .. max across ~320–1240px) */
+  --text-xs:   clamp(0.72rem, 0.69rem + 0.14vw, 0.80rem);
+  --text-sm:   clamp(0.85rem, 0.81rem + 0.18vw, 0.95rem);
+  --text-base: clamp(1.00rem, 0.95rem + 0.26vw, 1.15rem);
+  --text-lg:   clamp(1.20rem, 1.05rem + 0.6vw, 1.55rem);
+  --text-xl:   clamp(1.60rem, 1.25rem + 1.5vw, 2.6rem);
+  --text-2xl:  clamp(2.20rem, 1.50rem + 3.0vw, 4.0rem);
+  --text-display: clamp(3.0rem, 1.7rem + 6.2vw, 7.0rem);
+
+  --leading-body: 1.75;
+  --leading-tight: 1.08;
+  --tracking-wide: 0.18em;  /* uppercase eyebrows */
+  --tracking-caps: 0.04em;  /* display caps */
+
+  /* Spacing */
+  --space-2xs: 0.5rem;
+  --space-xs: 0.75rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2.5rem;
+  --space-xl: 4rem;
+  --section-y: clamp(4rem, 2rem + 8vw, 9rem);
+
+  /* Structure */
+  --measure: 62ch;
+  --container: 1240px;
+  --gutter: clamp(1.25rem, 0.5rem + 3vw, 4rem);
+  --header-h: 60px;
+  --radius: 6px;
+}

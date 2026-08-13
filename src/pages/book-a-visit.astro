@@ -1,0 +1,71 @@
+---
+import Base from "../layouts/Base.astro";
+---
+<Base title="Book a visit — Styal Lodge" showFloatingCta={false}>
+  <section class="form-page container">
+    <header class="form-page__intro">
+      <p class="eyebrow">Come and see us</p>
+      <h1 class="display">Book a <em>visit</em></h1>
+      <p class="prose">Tell us a little about your day and we'll be in touch to arrange a time to show you around the Lodge.</p>
+    </header>
+
+    <form class="enquiry" name="book-a-visit" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+      <input type="hidden" name="form-name" value="book-a-visit" />
+      <p class="hidden-field">
+        <label>Leave this empty <input name="bot-field" /></label>
+      </p>
+
+      <div class="field">
+        <label for="name">Name</label>
+        <input id="name" name="name" type="text" autocomplete="name" required />
+      </div>
+
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" required />
+      </div>
+
+      <div class="field">
+        <label for="phone">Phone <span class="field__opt">(optional)</span></label>
+        <input id="phone" name="phone" type="tel" autocomplete="tel" />
+      </div>
+
+      <div class="field">
+        <label for="year">Year you're getting married</label>
+        <select id="year" name="wedding-year" required>
+          <option value="" disabled selected>Please choose…</option>
+          <option value="2027">2027</option>
+          <option value="2028">2028</option>
+          <option value="2029">2029 (subject to availability)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="message">Message <span class="field__opt">(optional)</span></label>
+        <textarea id="message" name="message" rows="4"></textarea>
+      </div>
+
+      <button class="btn btn--solid" type="submit">Send enquiry</button>
+    </form>
+  </section>
+</Base>
+
+<style>
+  .form-page { padding-block: var(--section-y); max-width: 640px; }
+  .form-page__intro { margin-bottom: var(--space-xl); }
+  .form-page__intro .eyebrow { margin-bottom: var(--space-sm); }
+  .form-page__intro .prose { margin-top: var(--space-md); }
+  .enquiry { display: grid; gap: var(--space-md); }
+  .field { display: grid; gap: .5rem; }
+  .field label { font-size: var(--text-sm); letter-spacing: .02em; }
+  .field__opt { color: var(--muted); }
+  .field input, .field select, .field textarea {
+    font-family: inherit; font-size: var(--text-base); color: var(--ink);
+    background: transparent; border: 1px solid var(--hairline); border-radius: var(--radius);
+    padding: .75rem .9rem; width: 100%;
+  }
+  .field textarea { resize: vertical; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); outline: none; }
+  .enquiry .btn { justify-self: start; margin-top: var(--space-sm); }
+  .hidden-field { position: absolute; left: -9999px; }
+</style>

@@ -1,0 +1,40 @@
+---
+import "../styles/tokens.css";
+import "../styles/global.css";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import FloatingCta from "../components/FloatingCta.astro";
+
+interface Props {
+  title?: string;
+  description?: string;
+  showFloatingCta?: boolean;
+}
+const {
+  title = "Styal Lodge — Wedding Venue, Cheshire",
+  description = "A family-run wedding venue in Cheshire. Beautiful weddings, exceptional food, effortless planning.",
+  showFloatingCta = true,
+} = Astro.props;
+---
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#F5F2EB" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <!-- Larken via Adobe Fonts (web project shu6iux) -->
+    <link rel="stylesheet" href="https://use.typekit.net/shu6iux.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <Nav />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+    {showFloatingCta && <FloatingCta />}
+  </body>
+</html>

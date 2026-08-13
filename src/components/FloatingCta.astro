@@ -1,0 +1,32 @@
+---
+---
+<a class="floating-cta" href="/book-a-visit" data-floating-cta>Book a visit</a>
+
+<style>
+  .floating-cta {
+    position: fixed; z-index: 60;
+    right: clamp(1rem, 3vw, 2rem);
+    bottom: calc(clamp(1rem, 3vw, 2rem) + env(safe-area-inset-bottom, 0px));
+    background: var(--accent); color: var(--on-accent);
+    font-size: var(--text-sm); letter-spacing: .04em;
+    padding: .85em 1.6em; border-radius: 999px; text-decoration: none;
+    box-shadow: 0 6px 22px rgba(63, 59, 56, .20);
+    opacity: 0; transform: translateY(12px); pointer-events: none;
+    transition: opacity .35s ease, transform .35s ease, background-color .3s ease;
+  }
+  .floating-cta.is-visible { opacity: 1; transform: none; pointer-events: auto; }
+  .floating-cta:hover { background: var(--accent-hover); }
+  @media (prefers-reduced-motion: reduce) {
+    .floating-cta { transition: opacity .2s linear; transform: none; }
+  }
+</style>
+
+<script>
+  const cta = document.querySelector<HTMLElement>("[data-floating-cta]");
+  if (cta) {
+    const reveal = () =>
+      cta.classList.toggle("is-visible", window.scrollY > window.innerHeight * 0.7);
+    reveal();
+    addEventListener("scroll", reveal, { passive: true });
+  }
+</script>

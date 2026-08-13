@@ -1,0 +1,60 @@
+---
+const links = [
+  { label: "The Experience", href: "/#experience" },
+  { label: "Feasting", href: "/#feasting" },
+  { label: "Stories", href: "/#stories" },
+  { label: "FAQs", href: "/#faqs" },
+];
+const year = new Date().getFullYear();
+---
+<footer class="site-footer">
+  <div class="container site-footer__inner">
+    <a class="site-footer__logo" href="/" aria-label="Styal Lodge — home">
+      <img src="/logo-light.svg" width="971" height="617" alt="Styal Lodge" />
+    </a>
+
+    <nav class="site-footer__nav" aria-label="Footer">
+      {links.map((l) => (<a href={l.href}>{l.label}</a>))}
+    </nav>
+
+    <address class="site-footer__contact">
+      Styal Lodge, Station Road, Styal, Cheshire SK9 4JN<br />
+      <a href="mailto:info@styallodge.co.uk">info@styallodge.co.uk</a><br />
+      <a href="tel:+441625416376">01625 416 376</a>
+    </address>
+
+    <div class="site-footer__cta">
+      <a class="btn btn--ghost btn--on-dark" href="/details-pricing">Details &amp; Pricing</a>
+      <a class="btn btn--solid" href="/book-a-visit">Book a visit</a>
+    </div>
+
+    <p class="site-footer__legal">
+      <span>&copy; {year} Styal Lodge</span>
+      <span aria-hidden="true">·</span>
+      <a href="https://www.instagram.com/styallodge/">Instagram</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://www.tiktok.com/@styallodge">TikTok</a>
+    </p>
+  </div>
+</footer>
+
+<style>
+  .site-footer { background: var(--surface-dark); color: var(--on-dark); }
+  .site-footer__inner {
+    display: grid; justify-items: center; text-align: center;
+    gap: var(--space-lg); padding-block: var(--section-y);
+  }
+  .site-footer__logo img { height: 68px; width: auto; }
+  .site-footer__nav { display: flex; flex-wrap: wrap; justify-content: center; gap: clamp(1rem, 3vw, 2.25rem); }
+  .site-footer__nav a { font-size: var(--text-sm); letter-spacing: .03em; color: var(--on-dark); text-decoration: none; opacity: .85; transition: opacity .25s ease; }
+  .site-footer__nav a:hover { opacity: 1; }
+  .site-footer__contact { font-style: normal; color: var(--on-dark-muted); font-size: var(--text-sm); line-height: 2; }
+  .site-footer__contact a { color: var(--on-dark-muted); text-decoration: none; }
+  .site-footer__contact a:hover { color: var(--on-dark); }
+  .site-footer__cta { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; }
+  .btn--on-dark { color: var(--on-dark); border-color: rgba(245, 242, 235, .5); }
+  .btn--on-dark:hover { background: var(--on-dark); color: var(--surface-dark); border-color: var(--on-dark); }
+  .site-footer__legal { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; font-size: var(--text-xs); color: var(--on-dark-muted); }
+  .site-footer__legal a { color: var(--on-dark-muted); text-decoration: none; }
+  .site-footer__legal a:hover { color: var(--on-dark); }
+</style>

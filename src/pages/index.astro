@@ -1,0 +1,31 @@
+---
+import Base from "../layouts/Base.astro";
+import Hero from "../components/Hero.astro";
+
+const sections = [
+  { id: "experience", eyebrow: "The wedding day", title: ["The ", "Experience"],
+    body: "Placeholder — the morning, the ceremony, garden drinks, the wedding breakfast, golden hour and the party will live here." },
+  { id: "feasting", eyebrow: "Follow the Smoke", title: ["", "Feasting"],
+    body: "Placeholder — seasonal, fire, sharing and late-night woodfire pizza menus, plus The Styal Table tasting evening." },
+  { id: "stories", eyebrow: "Real weddings", title: ["", "Stories"],
+    body: "Placeholder — couples' stories and galleries from celebrations at the Lodge." },
+  { id: "faqs", eyebrow: "Good to know", title: ["", "FAQs"],
+    body: "Placeholder — the questions couples ask most, answered simply." },
+];
+---
+<Base>
+  <Hero />
+
+  {sections.map((s) => (
+    <section id={s.id} class="section container">
+      <p class="eyebrow">{s.eyebrow}</p>
+      <h2 class="display">{s.title[0]}<em>{s.title[1]}</em></h2>
+      <p class="prose">{s.body}</p>
+    </section>
+  ))}
+</Base>
+
+<style>
+  .section .eyebrow { margin-bottom: var(--space-sm); }
+  .section .display + .prose { margin-top: var(--space-md); }
+</style>
