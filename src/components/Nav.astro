@@ -59,7 +59,7 @@ const links = [
   }
   .nav-link:hover { color: var(--accent); }
   .nav-cta {
-    border: 1px solid rgba(82, 79, 76, .35);
+    border: 1px solid rgba(63, 58, 54, .35);
     border-radius: 999px; padding: .5em 1.15em;
     transition: color .25s ease, border-color .25s ease;
   }
@@ -86,10 +86,6 @@ const links = [
   .nav-toggle__bar::after  { top: 7px; }
 
   @media (max-width: 64em) {
-    /* header sits over the full-height hero photo */
-    .site-header { position: fixed; left: 0; right: 0; background: transparent; }
-    .site-header.is-scrolled, .site-header.nav-open { background: var(--bg); }
-    .site-header:not(.is-scrolled):not(.nav-open) .nav-toggle { color: var(--on-dark); }
     .nav-left { display: none; }
     .nav-toggle { display: inline-flex; }
     .only-mobile { display: block; }

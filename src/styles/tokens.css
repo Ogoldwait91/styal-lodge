@@ -1,17 +1,21 @@
 /* Styal Lodge — design tokens. One source of truth for palette, type & spacing. */
 :root {
-  /* Palette */
-  --bg: #F5F2EB;            /* cream background */
-  --ink: #524f4c;          /* body text / dark grey */
-  --ink-strong: #3f3b38;   /* display headings — matches the logo wordmark */
-  --accent: #66705f;       /* sage — actions */
-  --accent-hover: #58604f;
-  --on-accent: #F5F2EB;
-  --surface-dark: #524f4c; /* footer & dark sections */
-  --on-dark: #F5F2EB;
-  --on-dark-muted: #d8d3c8;
-  --hairline: rgba(82, 79, 76, 0.16);
-  --muted: rgba(82, 79, 76, 0.66);
+  /* Palette — Styal brand v1.0 */
+  --bg: #F4F1EA;            /* Oat — signature background */
+  --ink: #3F3A36;          /* Charcoal — headings + body (never pure black) */
+  --ink-strong: #3F3A36;   /* Charcoal */
+  --stone: #706962;        /* Stone — secondary / supporting copy */
+  --taupe: #A3968B;        /* Warm Taupe — captions / category headings */
+  --accent: #7B8573;       /* Sage — primary actions */
+  --accent-hover: #6E7868; /* Sage hover */
+  --olive: #818B78;        /* Olive — secondary accent */
+  --on-accent: #FFFFFF;    /* text on primary button */
+  --surface: #FBF9F5;      /* Ivory — cards / quote blocks */
+  --surface-dark: #3F3A36; /* Charcoal — footer / dark sections */
+  --on-dark: #F4F1EA;      /* oat text on charcoal */
+  --on-dark-muted: #C9C2B6;
+  --hairline: #D8D2C8;     /* soft divider */
+  --muted: #706962;        /* stone (alias) */
 
   /* Type — Larken (Adobe Fonts web project shu6iux) */
   --font-serif: "larken", Georgia, "Times New Roman", serif;
