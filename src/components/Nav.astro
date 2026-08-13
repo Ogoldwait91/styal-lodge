@@ -86,6 +86,10 @@ const links = [
   .nav-toggle__bar::after  { top: 7px; }
 
   @media (max-width: 64em) {
+    /* header sits over the full-height hero photo */
+    .site-header { position: fixed; left: 0; right: 0; background: transparent; }
+    .site-header.is-scrolled, .site-header.nav-open { background: var(--bg); }
+    .site-header:not(.is-scrolled):not(.nav-open) .nav-toggle { color: var(--on-dark); }
     .nav-left { display: none; }
     .nav-toggle { display: inline-flex; }
     .only-mobile { display: block; }
@@ -128,7 +132,8 @@ const links = [
   addEventListener("scroll", onScroll, { passive: true });
 
   // reveal the centred header logo once the big hero wordmark scrolls out of view
-  const wordmark = document.querySelector("[data-hero-wordmark]");
+  const wordmarks = Array.from(document.querySelectorAll("[data-hero-wordmark]"));
+  const wordmark = wordmarks.find((el) => el.offsetParent !== null) || wordmarks[0];
   if (header) {
     if (wordmark) {
       const io = new IntersectionObserver(

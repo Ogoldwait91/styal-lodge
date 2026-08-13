@@ -17,7 +17,22 @@ import hero from "../assets/hero.jpg";
       loading="eager"
       fetchpriority="high"
     />
+
+    <!-- desktop caption (bottom-right) -->
     <p class="hero__tagline">Beautiful weddings, Exceptional food, Effortless planning</p>
+
+    <!-- mobile overlay (name + tagline + action on the photo) -->
+    <div class="hero__overlay">
+      <img class="hero__overlay-logo" data-hero-wordmark src="/logo-light.svg" alt="Styal Lodge — Wedding Venue, Cheshire" />
+      <p class="hero__overlay-tagline">Beautiful weddings, Exceptional food, Effortless planning</p>
+      <a class="hero__overlay-cta" href="/book-a-visit">Book a visit</a>
+    </div>
+
+    <span class="hero__scrollcue" aria-hidden="true">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+        <path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </span>
   </div>
 </section>
 
@@ -27,42 +42,77 @@ import hero from "../assets/hero.jpg";
     min-height: calc(100dvh - var(--header-h));
     display: flex; flex-direction: column;
   }
-
   .hero__masthead {
-    flex: 0 0 auto;
-    display: flex; justify-content: center;
-    padding-top: clamp(0.25rem, 1vh, 0.9rem);
-    padding-bottom: clamp(0.4rem, 1vh, 0.85rem);
+    flex: 0 0 auto; display: flex; justify-content: center;
+    padding-top: clamp(0rem, 0.2vw, 0.2rem);
+    padding-bottom: clamp(0.4rem, 1.2vw, 0.9rem);
   }
   .hero__wordmark { height: clamp(72px, 10.2vw, 160px); width: auto; }
 
   .hero__media { position: relative; flex: 1 1 auto; min-height: 240px; width: 100%; }
-  .hero__img {
-    width: 100%; height: 100%;
-    object-fit: cover; object-position: center 15%; display: block;
-  }
-  /* soft scrim so the cream tagline stays legible over the photo */
+  .hero__img { width: 100%; height: 100%; object-fit: cover; object-position: center 6%; display: block; }
   .hero__media::after {
     content: ""; position: absolute; inset: auto 0 0 0; height: 45%;
-    background: linear-gradient(to top, rgba(20, 18, 16, .5), rgba(20, 18, 16, 0));
+    background: linear-gradient(to top, rgba(20,18,16,.5), rgba(20,18,16,0));
     pointer-events: none; z-index: 1;
   }
 
+  /* desktop caption */
   .hero__tagline {
-    position: absolute; z-index: 2;
-    right: clamp(1rem, 3vw, 3rem);
-    bottom: clamp(0.7rem, 2vh, 1.4rem);
-    margin: 0; color: var(--bg); text-align: right;
-    font-style: italic; white-space: nowrap;
-    font-size: clamp(0.85rem, 0.55rem + 0.85vw, 1.35rem);
-    line-height: 1.3; letter-spacing: .01em;
-    text-shadow: 0 1px 12px rgba(20, 18, 16, .55);
+    position: absolute; z-index: 2; right: clamp(1rem,3vw,3rem); bottom: clamp(0.7rem,2vh,1.4rem);
+    margin: 0; color: var(--bg); text-align: right; font-style: italic; white-space: nowrap;
+    font-size: clamp(0.85rem, 0.55rem + 0.85vw, 1.35rem); line-height: 1.3; letter-spacing: .01em;
+    text-shadow: 0 1px 12px rgba(20,18,16,.55);
   }
 
-  @media (max-width: 40em) {
-    .hero__tagline {
-      left: clamp(1rem, 5vw, 2rem); white-space: normal;
-      font-size: 0.95rem; text-align: right;
+  .hero__overlay { display: none; }
+  .hero__scrollcue { display: none; }
+
+  /* ---------- MOBILE: full-height photo with the name/tagline on it ---------- */
+  @media (max-width: 64em) {
+    .hero { min-height: 100vh; min-height: 100dvh; height: 100dvh; }
+    .hero__masthead { display: none; }
+    .hero__tagline { display: none; }
+    .hero__media { height: 100%; }
+    .hero__img { object-position: center 30%; }
+
+    /* darken the top a touch (menu button) and the bottom more (overlay text) */
+    .hero__media::before {
+      content: ""; position: absolute; inset: 0 0 auto 0; height: 24%;
+      background: linear-gradient(to bottom, rgba(20,18,16,.42), rgba(20,18,16,0));
+      pointer-events: none; z-index: 1;
     }
+    .hero__media::after {
+      height: 62%;
+      background: linear-gradient(to top, rgba(20,18,16,.64), rgba(20,18,16,0));
+    }
+
+    .hero__overlay {
+      display: flex; flex-direction: column; align-items: center; gap: 1.35rem;
+      position: absolute; left: 0; right: 0; bottom: clamp(3rem, 12vh, 6rem);
+      padding-inline: 1.5rem; z-index: 2; text-align: center;
+    }
+    .hero__overlay-logo { width: min(74vw, 360px); height: auto; }
+    .hero__overlay-tagline {
+      margin: 0; color: var(--bg); font-style: italic; max-width: 24ch;
+      font-size: clamp(1rem, 4.4vw, 1.4rem); line-height: 1.35;
+      text-shadow: 0 1px 12px rgba(20,18,16,.5);
+    }
+    .hero__overlay-cta {
+      display: inline-block; color: var(--bg); text-decoration: none;
+      border: 1px solid rgba(245,242,235,.75); border-radius: 999px;
+      padding: .72em 1.7em; font-size: var(--text-sm); letter-spacing: .03em;
+      transition: background-color .25s ease, color .25s ease;
+    }
+    .hero__overlay-cta:hover { background: var(--bg); color: var(--ink); }
+
+    .hero__scrollcue {
+      display: block; position: absolute; left: 50%; bottom: 1rem; transform: translateX(-50%);
+      z-index: 2; color: var(--bg); opacity: .85;
+      animation: heroBounce 2.2s ease-in-out infinite;
+    }
+    @keyframes heroBounce { 0%,100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, 6px); } }
   }
+
+  @media (prefers-reduced-motion: reduce) { .hero__scrollcue { animation: none; } }
 </style>
