@@ -47,16 +47,19 @@ import bride from "../assets/morning-bride.jpg";
 </section>
 
 <style>
-  .exp__title { margin-bottom: var(--space-lg); }
+  .exp__title { margin: 0 auto var(--space-lg); max-width: 1040px; }
   /* Sage accent on the italic word, per the section template */
   .exp__title em { color: var(--accent); }
 
   /* ---------- DESKTOP: fixed-ratio box, absolutely placed children ---------- */
-  /* Box + child positions map directly to the section template's geometry. */
+  /* Box + child positions map directly to the section template's geometry.
+     The whole composition is capped and centred so it reads as one contained
+     spread with generous margins, rather than a block pinned to the left. */
   .chapter {
     position: relative;
     aspect-ratio: 15 / 13;
-    margin: 0;
+    max-width: 1040px;
+    margin-inline: auto;
   }
   .chapter__lead,
   .chapter__inset { position: absolute; overflow: hidden; }
