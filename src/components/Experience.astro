@@ -1,0 +1,112 @@
+---
+/*
+  Experience.astro — "The wedding day" narrative section (#experience).
+
+  First chapter: "The morning". Editorial overlap — a wide black-and-white
+  getting-ready photo with the colour bride portrait overlapping its
+  bottom-right corner, and the chapter label sitting in the oat gap between.
+
+  The desktop layout is a fixed-ratio box with absolutely-positioned children,
+  so it scales fluidly at any width. Images use object-fit: cover, so the exact
+  slot proportions are a composition choice — the photos crop to fill cleanly.
+  On mobile (<=64em) it unstacks into a calm single column.
+
+  More chapters (ceremony, garden drinks, the wedding breakfast, golden hour,
+  the party) can follow the same <figure class="chapter"> pattern.
+*/
+import { Image } from "astro:assets";
+import prep from "../assets/morning-prep.jpg";
+import bride from "../assets/morning-bride.jpg";
+---
+<section id="experience" class="section container exp">
+  <h2 class="display exp__title">Wedding <em>experience</em></h2>
+
+  <figure class="chapter">
+    <div class="chapter__lead">
+      <Image
+        src={prep}
+        alt="The bride having her make-up done in the getting-ready suite on the morning of the wedding"
+        widths={[500, 800, 1200, 1600]}
+        sizes="(max-width: 64em) 88vw, 40vw"
+        loading="lazy"
+      />
+    </div>
+
+    <div class="chapter__inset">
+      <Image
+        src={bride}
+        alt="The bride in her gown, holding her bouquet before the ceremony"
+        widths={[400, 700, 1000, 1200]}
+        sizes="(max-width: 64em) 70vw, 26vw"
+        loading="lazy"
+      />
+    </div>
+
+    <figcaption class="chapter__label">The <em>morning</em></figcaption>
+  </figure>
+</section>
+
+<style>
+  .exp__title { margin-bottom: var(--space-lg); }
+  /* Sage accent on the italic word, per the section template */
+  .exp__title em { color: var(--accent); }
+
+  /* ---------- DESKTOP: fixed-ratio box, absolutely placed children ---------- */
+  /* Box + child positions map directly to the section template's geometry. */
+  .chapter {
+    position: relative;
+    aspect-ratio: 15 / 13;
+    margin: 0;
+  }
+  .chapter__lead,
+  .chapter__inset { position: absolute; overflow: hidden; }
+  .chapter__lead :global(img),
+  .chapter__inset :global(img) {
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
+  }
+
+  /* wide B&W lead, top-left */
+  .chapter__lead { top: 0; left: 0; width: 85%; height: 55%; z-index: 1; }
+
+  /* colour portrait, overlapping the lead's bottom-right and hanging below */
+  .chapter__inset { right: 0; bottom: 0; width: 38%; height: 61%; z-index: 2; }
+
+  /* label in the oat gap, just left of the portrait, near the lead's base */
+  .chapter__label {
+    position: absolute; right: 40%; bottom: 38%; z-index: 3;
+    text-align: right;
+    font-size: var(--text-xl);
+    color: var(--ink);
+    line-height: var(--leading-tight);
+  }
+  .chapter__label em { font-style: italic; }
+
+  /* ---------- MOBILE: calm single column ---------- */
+  @media (max-width: 64em) {
+    .exp__title { margin-bottom: var(--space-md); }
+
+    .chapter {
+      position: static;
+      aspect-ratio: auto;
+      display: grid;
+      row-gap: clamp(1rem, 3.5vw, 1.75rem);
+    }
+    .chapter__lead,
+    .chapter__inset {
+      position: static; inset: auto;
+      width: 100%; height: auto;
+    }
+    .chapter__lead  { order: 1; aspect-ratio: 3 / 2; }
+    .chapter__label {
+      position: static; order: 2;
+      right: auto; bottom: auto;
+      text-align: right;
+      font-size: var(--text-lg);
+    }
+    .chapter__inset {
+      order: 3; width: 74%; margin-left: auto;
+      aspect-ratio: 2 / 3;
+    }
+  }
+</style>
