@@ -47,9 +47,14 @@ import bride from "../assets/morning-bride.jpg";
 </section>
 
 <style>
-  .exp__title { margin: 0 auto var(--space-lg); max-width: 1040px; }
+  .exp__title { margin: 0 0 var(--space-lg); }
   /* Sage accent on the italic word, per the section template */
   .exp__title em { color: var(--accent); }
+  /* Desktop: outdent the heading out to the page gutter, so it sits clearly
+     to the left of the contained image column instead of lining up with it. */
+  @media (min-width: 64.01em) {
+    .exp__title { margin-left: calc(50% - 50vw + var(--gutter)); }
+  }
 
   /* ---------- DESKTOP: fixed-ratio box, absolutely placed children ---------- */
   /* Box + child positions map directly to the section template's geometry.
