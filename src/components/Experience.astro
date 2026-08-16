@@ -50,10 +50,11 @@ import bride from "../assets/morning-bride.jpg";
   .exp__title { margin: 0 0 var(--space-lg); }
   /* Sage accent on the italic word, per the section template */
   .exp__title em { color: var(--accent); }
-  /* Desktop: outdent the heading out to the page gutter, so it sits clearly
-     to the left of the contained image column instead of lining up with it. */
+  /* Desktop: outdent the heading a restrained step left of the image column.
+     Capped at -2.5rem so it stays consistent and never drifts out to the page
+     edge on wide monitors; tapers to nothing as the layout narrows. */
   @media (min-width: 64.01em) {
-    .exp__title { margin-left: calc(50% - 50vw + var(--gutter)); }
+    .exp__title { margin-left: max(-2.5rem, calc(50% - 50vw + var(--gutter))); }
   }
 
   /* ---------- DESKTOP: fixed-ratio box, absolutely placed children ---------- */
