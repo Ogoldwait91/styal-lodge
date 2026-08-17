@@ -19,6 +19,12 @@ import prep from "../assets/morning-prep.jpg";
 import bride from "../assets/morning-bride.jpg";
 import ceremonyLead from "../assets/ceremony-lead.jpg";
 import ceremonyInset from "../assets/ceremony-inset.jpg";
+import breakfast from "../assets/breakfast.jpg";
+import garden from "../assets/garden.jpg";
+import goldenLead from "../assets/golden-lead.jpg";
+import goldenInset from "../assets/golden-inset.jpg";
+import partyLead from "../assets/party-lead.jpg";
+import partyInset from "../assets/party-inset.jpg";
 ---
 <section id="experience" class="section container exp">
   <h2 class="display exp__title">The <em>Experience</em></h2>
@@ -70,9 +76,89 @@ import ceremonyInset from "../assets/ceremony-inset.jpg";
       <figcaption class="chapter__label">The <em>Ceremony</em></figcaption>
     </div>
   </figure>
+
+  <!-- Wedding Breakfast + Garden Drinks (interlocking staggered pair) -->
+  <div class="duo">
+    <figure class="plate plate--right">
+      <Image
+        src={breakfast}
+        alt="The groom giving his speech as guests raise a toast during the wedding breakfast"
+        widths={[600, 900, 1300, 1800]}
+        sizes="(max-width: 64em) 96vw, 66vw"
+        loading="lazy"
+      />
+      <figcaption class="plate__label">Wedding Breakfast</figcaption>
+    </figure>
+    <figure class="plate plate--left">
+      <Image
+        src={garden}
+        alt="An aerial view of guests dining outdoors on the terrace among the gardens"
+        widths={[600, 1000, 1400, 1900]}
+        sizes="(max-width: 64em) 100vw, 60vw"
+        loading="lazy"
+      />
+      <figcaption class="plate__label">Garden Drinks</figcaption>
+    </figure>
+  </div>
+
+  <!-- Golden Hour (full-bleed colour lead, B&W inset top-left) -->
+  <figure class="chapter chapter--golden">
+    <div class="golden__head">
+      <span class="chapter__label golden__label">Golden <em>hour</em></span>
+    </div>
+    <div class="golden__lead">
+      <Image
+        src={goldenLead}
+        alt="A couple sharing a quiet moment on the jetty by the lake in the golden evening light"
+        widths={[900, 1300, 1700, 2100, 2560]}
+        sizes="100vw"
+        loading="lazy"
+      />
+    </div>
+    <div class="golden__inset">
+      <Image
+        src={goldenInset}
+        alt="A couple laughing under a clear umbrella as champagne sprays over them"
+        widths={[360, 600, 900]}
+        sizes="(max-width: 64em) 60vw, 24vw"
+        loading="lazy"
+      />
+    </div>
+  </figure>
+
+  <!-- The Party (colour lead bottom-left, B&W inset top-right) -->
+  <figure class="chapter chapter--party">
+    <div class="party__inset">
+      <Image
+        src={partyInset}
+        alt="Newlyweds sharing their first dance as the band plays"
+        widths={[400, 700, 1000, 1200]}
+        sizes="(max-width: 64em) 74vw, 34vw"
+        loading="lazy"
+      />
+    </div>
+    <div class="party__lead">
+      <Image
+        src={partyLead}
+        alt="The couple dancing joyfully together on the dancefloor as the party gets going"
+        widths={[700, 1100, 1500, 1900]}
+        sizes="(max-width: 64em) 100vw, 70vw"
+        loading="lazy"
+      />
+    </div>
+    <figcaption class="chapter__label party__label">The <em>party</em></figcaption>
+  </figure>
 </section>
 
 <style>
+  /* one shared vertical gap between the section's stacked elements */
+  .exp {
+    --stack-gap: calc(clamp(0.5rem, 1.5vw, 1.5rem) + clamp(2rem, 5vw, 4rem));
+    --label-gap: clamp(1.75rem, 3.5vw, 3rem);   /* consistent gap between each label and its image */
+    --label-shift-v: 1.5cm;                      /* how far labels nudge up/down */
+    --label-shift-h: 1cm;                        /* how far the morning/ceremony labels nudge out */
+    padding-top: var(--stack-gap); /* sit closer to the hero, matching the other gaps */
+  }
   .exp__title { margin: 0 0 var(--space-lg); }
   /* Italic accent word in charcoal, matching the rest of the heading */
   .exp__title em { color: var(--ink-strong); }
@@ -82,7 +168,7 @@ import ceremonyInset from "../assets/ceremony-inset.jpg";
   }
 
   .chapter { position: relative; max-width: 1040px; margin-inline: auto; }
-  .chapter + .chapter { margin-top: clamp(1rem, 2.5vw, 2.5rem); }
+  .chapter + .chapter { margin-top: var(--stack-gap); }
 
   /* ---------- shared image + label bits ---------- */
   .chapter__lead,
@@ -112,7 +198,7 @@ import ceremonyInset from "../assets/ceremony-inset.jpg";
   .chapter--morning { aspect-ratio: 15 / 13; }
   .chapter--morning .chapter__lead  { top: 0; left: 0; width: 85%; height: 55%; }
   .chapter--morning .chapter__inset { right: 0; bottom: 0; width: 38%; height: 61%; }
-  .chapter--morning .chapter__label { position: absolute; right: 40%; bottom: 38%; text-align: right; }
+  .chapter--morning .chapter__label { position: absolute; right: calc(38% + var(--label-gap) + var(--label-shift-h)); bottom: calc(38% - var(--label-shift-v)); text-align: right; }
 
   /* ---------- The Ceremony (full-bleed lead) ---------- */
   .chapter--ceremony {
@@ -144,9 +230,94 @@ import ceremonyInset from "../assets/ceremony-inset.jpg";
   }
   .chapter--ceremony .chapter__label {
     position: absolute;
-    top: clamp(0.75rem, 3vw, 2rem);                          /* up, near the band */
-    left: calc(var(--cer-inset-w) + clamp(0.75rem, 1.8vw, 1.5rem)); /* tight to the inset */
+    top: calc(clamp(0.75rem, 3vw, 2rem) + var(--label-shift-v));
+    left: calc(var(--cer-inset-w) + var(--label-gap) + var(--label-shift-h));
     text-align: left;
+  }
+
+  /* ---------- Wedding Breakfast + Garden Drinks (interlocking pair) ---------- */
+  .duo { position: relative; }
+  /* match the gap above the duo to the gap below it (garden -> golden hour) */
+  .chapter + .duo { margin-top: var(--stack-gap); }
+  .duo + .chapter { margin-top: clamp(0.5rem, 1.5vw, 1.5rem); } /* Golden Hour sits closer */
+  .plate { position: relative; margin: 0; }
+  .plate :global(img) { display: block; width: 100%; height: auto; }
+  .plate__label {
+    position: absolute; bottom: clamp(0.75rem, 1.6vw, 1.5rem);
+    color: var(--on-dark); font-style: italic;
+    font-size: var(--text-lg); letter-spacing: normal; line-height: 1.2;
+    text-shadow: 0 1px 10px rgba(20, 18, 16, .55);
+  }
+  .plate--right { width: 66%; margin-left: auto; margin-right: 0; }
+  .plate--right .plate__label { right: clamp(1rem, 2.2vw, 2rem); }
+  .plate--left {
+    width: 70%; margin-right: auto; margin-left: 0;
+    margin-top: clamp(-5rem, -7vw, -3rem);           /* sits lower against the breakfast */
+    z-index: 2;
+    border: clamp(3px, 0.3vw, 5px) solid var(--bg);  /* oat cut */
+  }
+  .plate--left .plate__label { left: clamp(1rem, 2.2vw, 2rem); }
+
+  /* ---------- Golden Hour (full-bleed colour lead, B&W inset top-left) ---------- */
+  .chapter--golden {
+    max-width: none; margin-inline: 0;
+    --golden-inset-w: calc(clamp(230px, 23vw, 320px) + 1.5cm);   /* widened 1.5cm (extends left) */
+    --golden-inset-left: max(-2.5rem, calc(50% - 50vw + var(--gutter)));
+    --golden-head-h: clamp(10rem, 24vw, 18rem);
+  }
+  .golden__head {
+    width: 100vw; margin-left: calc(50% - 50vw);
+    border-bottom: 1px solid var(--hairline);   /* full-width hairline divider */
+    min-height: var(--golden-head-h);
+  }
+  /* label sits to the left of the B&W inset, dropped down to just above the image */
+  .golden__label {
+    position: absolute;
+    top: calc(var(--golden-head-h) - 3.5rem - var(--label-shift-v));
+    right: calc(var(--golden-inset-left) + var(--golden-inset-w) + var(--label-gap));
+    text-align: right;
+  }
+  .golden__lead {
+    width: 100vw; margin-left: calc(50% - 50vw);
+    height: clamp(440px, 55vw, 780px);
+    overflow: hidden;
+  }
+  .golden__lead :global(img) {
+    width: 100%; height: 100%; object-fit: cover; object-position: center 55%; display: block;
+  }
+  .golden__inset {
+    position: absolute;
+    top: clamp(0.75rem, 2vw, 1.5rem);
+    right: var(--golden-inset-left);
+    width: var(--golden-inset-w);
+    aspect-ratio: 2 / 3;
+    overflow: hidden;
+    border: clamp(3px, 0.3vw, 5px) solid var(--bg);   /* oat frame, matches other insets */
+    z-index: 2;
+  }
+  .golden__inset :global(img) { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  /* ---------- The Party (colour lead bottom-left, B&W inset top-right) ---------- */
+  .chapter--party {
+    aspect-ratio: 1 / 1;
+    --party-inset-right: max(-6.25rem, calc(50% - 50vw + var(--gutter)));
+    --party-inset-w: 50%;
+  }
+  .party__inset, .party__lead { position: absolute; overflow: hidden; }
+  .party__inset :global(img), .party__lead :global(img) {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .party__lead {
+    left: 0; bottom: 0; width: 94%; height: 64%; z-index: 2;                /* colour, wider, in front */
+    border: clamp(3px, 0.3vw, 5px) solid var(--bg);                         /* oat cut */
+  }
+  .party__inset {
+    top: 0; right: var(--party-inset-right);                                /* B&W twirl, moved right */
+    width: var(--party-inset-w); height: 42%; z-index: 1;                   /* behind the colour */
+  }
+  .party__label {
+    position: absolute; z-index: 3; top: calc(26% - var(--label-shift-v)); text-align: right;
+    right: calc(var(--party-inset-right) + var(--party-inset-w) + var(--label-gap));
   }
 
   /* ---------- MOBILE: calm single column ---------- */
@@ -183,5 +354,44 @@ import ceremonyInset from "../assets/ceremony-inset.jpg";
       order: 2; width: 74%; margin-right: auto; margin-top: 0;
       aspect-ratio: 4 / 5;
     }
+
+    /* Wedding Breakfast + Garden Drinks */
+    .chapter + .duo { margin-top: clamp(1.25rem, 4vw, 2rem); }
+    .duo + .chapter { margin-top: clamp(1.25rem, 4vw, 2rem); }
+    .plate--right, .plate--left { width: 100%; margin-inline: 0; }
+    .plate--left { margin-top: clamp(1rem, 4vw, 1.5rem); border: 0; }
+    .plate__label { font-size: var(--text-base); }
+    .plate--right .plate__label { right: clamp(0.75rem, 3vw, 1.25rem); }
+    .plate--left  .plate__label { left: clamp(0.75rem, 3vw, 1.25rem); }
+
+    /* Golden Hour */
+    .golden__head { min-height: auto; padding-block: clamp(1rem, 4vw, 1.75rem); }
+    .golden__label {
+      position: static; top: auto; left: auto;
+      display: block;
+      width: min(var(--container), 100% - var(--gutter) * 2);
+      margin-inline: auto;
+      text-align: right;
+      font-size: var(--text-lg);
+    }
+    .golden__lead { height: auto; aspect-ratio: 3 / 2; }
+    .golden__lead :global(img) { object-position: center; }
+    .golden__inset {
+      position: static; left: auto; right: auto; top: auto;
+      width: 60%; margin-left: auto; margin-top: clamp(1rem, 3.5vw, 1.5rem);
+    }
+
+    /* The Party */
+    .chapter--party {
+      position: static; aspect-ratio: auto;
+      display: grid; row-gap: clamp(1rem, 3.5vw, 1.75rem);
+    }
+    .party__inset, .party__lead {
+      position: static; inset: auto; width: 100%; height: auto;
+    }
+    .party__label { position: static; inset: auto; font-size: var(--text-lg); }
+    .party__lead  { order: 1; aspect-ratio: 3 / 2; }
+    .party__label { order: 2; text-align: right; }
+    .party__inset { order: 3; width: 74%; margin-left: auto; aspect-ratio: 3 / 2; }
   }
 </style>

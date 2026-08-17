@@ -2,11 +2,10 @@
 import Base from "../layouts/Base.astro";
 import Hero from "../components/Hero.astro";
 import Experience from "../components/Experience.astro";
+import Feasting from "../components/Feasting.astro";
 
 // Sections still to be built out (eyebrow + heading + one placeholder line each).
 const sections = [
-  { id: "feasting", eyebrow: "Follow the Smoke", title: ["", "Feasting"],
-    body: "Placeholder — seasonal, fire, sharing and late-night woodfire pizza menus, plus The Styal Table tasting evening." },
   { id: "stories", eyebrow: "Real weddings", title: ["", "Stories"],
     body: "Placeholder — couples' stories and galleries from celebrations at the Lodge." },
   { id: "faqs", eyebrow: "Good to know", title: ["", "FAQs"],
@@ -17,6 +16,8 @@ const sections = [
   <Hero />
 
   <Experience />
+
+  <Feasting />
 
   {sections.map((s) => (
     <section id={s.id} class="section container">
