@@ -300,7 +300,7 @@ import partyInset from "../assets/party-inset.jpg";
   /* ---------- The Party (colour lead bottom-left, B&W inset top-right) ---------- */
   .chapter--party {
     aspect-ratio: 1 / 1;
-    --party-inset-right: max(-6.25rem, calc(50% - 50vw + var(--gutter)));
+    --party-inset-left: max(-6.25rem, calc(50% - 50vw + var(--gutter)));
     --party-inset-w: 50%;
   }
   .party__inset, .party__lead { position: absolute; overflow: hidden; }
@@ -308,16 +308,16 @@ import partyInset from "../assets/party-inset.jpg";
     width: 100%; height: 100%; object-fit: cover; display: block;
   }
   .party__lead {
-    left: 0; bottom: 0; width: 94%; height: 64%; z-index: 2;                /* colour, wider, in front */
-    border: clamp(3px, 0.3vw, 5px) solid var(--bg);                         /* oat cut */
+    right: 0; bottom: 0; width: 64%; height: 64%; z-index: 1;               /* colour, on the right, behind */
   }
   .party__inset {
-    top: 0; right: var(--party-inset-right);                                /* B&W twirl, moved right */
-    width: var(--party-inset-w); height: 42%; z-index: 1;                   /* behind the colour */
+    top: 0; left: var(--party-inset-left);                                  /* B&W twirl, to the left */
+    width: var(--party-inset-w); height: 56%; z-index: 2;                   /* in front */
+    border: clamp(3px, 0.3vw, 5px) solid var(--bg);                         /* oat cut */
   }
   .party__label {
-    position: absolute; z-index: 3; top: calc(26% - var(--label-shift-v)); text-align: right;
-    right: calc(var(--party-inset-right) + var(--party-inset-w) + var(--label-gap));
+    position: absolute; z-index: 3; top: calc(26% - var(--label-shift-v)); text-align: left;
+    left: calc(var(--party-inset-left) + var(--party-inset-w) + var(--label-gap));
   }
 
   /* ---------- MOBILE: calm single column ---------- */
@@ -391,7 +391,7 @@ import partyInset from "../assets/party-inset.jpg";
     }
     .party__label { position: static; inset: auto; font-size: var(--text-lg); }
     .party__lead  { order: 1; aspect-ratio: 3 / 2; }
-    .party__label { order: 2; text-align: right; }
-    .party__inset { order: 3; width: 74%; margin-left: auto; aspect-ratio: 3 / 2; }
+    .party__label { order: 2; text-align: left; }
+    .party__inset { order: 3; width: 74%; margin-right: auto; margin-left: 0; aspect-ratio: 3 / 2; }
   }
 </style>
