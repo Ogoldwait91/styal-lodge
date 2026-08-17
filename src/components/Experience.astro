@@ -2,26 +2,29 @@
 /*
   Experience.astro — "The wedding day" narrative section (#experience).
 
-  First chapter: "The morning". Editorial overlap — a wide black-and-white
-  getting-ready photo with the colour bride portrait overlapping its
-  bottom-right corner, and the chapter label sitting in the oat gap between.
+  Each chapter is an editorial overlap: a large lead photo with a smaller
+  second image overlapping one corner (thin oat border reads as a clean cut),
+  and a chapter label sitting in the oat gap beside it.
 
-  The desktop layout is a fixed-ratio box with absolutely-positioned children,
-  so it scales fluidly at any width. Images use object-fit: cover, so the exact
-  slot proportions are a composition choice — the photos crop to fill cleanly.
-  On mobile (<=64em) it unstacks into a calm single column.
+  - The Morning:  wide B&W lead top-left, colour portrait bottom-right, label left.
+  - The Ceremony: FULL-BLEED colour lead band, B&W image overlapping bottom-left,
+                  label to the right.
 
-  More chapters (ceremony, garden drinks, the wedding breakfast, golden hour,
-  the party) can follow the same <figure class="chapter"> pattern.
+  Desktop uses fixed-ratio / absolute positioning so it scales fluidly;
+  object-fit: cover means slot proportions are a composition choice. On mobile
+  (<=64em) each chapter unstacks to one calm column.
 */
 import { Image } from "astro:assets";
 import prep from "../assets/morning-prep.jpg";
 import bride from "../assets/morning-bride.jpg";
+import ceremonyLead from "../assets/ceremony-lead.jpg";
+import ceremonyInset from "../assets/ceremony-inset.jpg";
 ---
 <section id="experience" class="section container exp">
-  <h2 class="display exp__title">Wedding <em>experience</em></h2>
+  <h2 class="display exp__title">The <em>Experience</em></h2>
 
-  <figure class="chapter">
+  <!-- The Morning -->
+  <figure class="chapter chapter--morning">
     <div class="chapter__lead">
       <Image
         src={prep}
@@ -31,7 +34,6 @@ import bride from "../assets/morning-bride.jpg";
         loading="lazy"
       />
     </div>
-
     <div class="chapter__inset">
       <Image
         src={bride}
@@ -41,81 +43,145 @@ import bride from "../assets/morning-bride.jpg";
         loading="lazy"
       />
     </div>
+    <figcaption class="chapter__label">The <em>Morning</em></figcaption>
+  </figure>
 
-    <figcaption class="chapter__label">The <em>morning</em></figcaption>
+  <!-- The Ceremony -->
+  <figure class="chapter chapter--ceremony">
+    <div class="cer__lead">
+      <Image
+        src={ceremonyLead}
+        alt="The newlyweds walking back down the aisle hand in hand as guests applaud"
+        widths={[900, 1300, 1700, 2100, 2560]}
+        sizes="100vw"
+        loading="lazy"
+      />
+    </div>
+    <div class="cer__foot">
+      <div class="cer__inset">
+        <Image
+          src={ceremonyInset}
+          alt="A couple stepping through the doorway together after the ceremony"
+          widths={[400, 700, 1000, 1200]}
+          sizes="(max-width: 64em) 74vw, 24vw"
+          loading="lazy"
+        />
+      </div>
+      <figcaption class="chapter__label">The <em>Ceremony</em></figcaption>
+    </div>
   </figure>
 </section>
 
 <style>
   .exp__title { margin: 0 0 var(--space-lg); }
-  /* Sage accent on the italic word, per the section template */
-  .exp__title em { color: var(--accent); }
-  /* Desktop: outdent the heading a restrained step left of the image column.
-     Capped at -2.5rem so it stays consistent and never drifts out to the page
-     edge on wide monitors; tapers to nothing as the layout narrows. */
+  /* Italic accent word in charcoal, matching the rest of the heading */
+  .exp__title em { color: var(--ink-strong); }
+  /* Desktop: outdent the heading a restrained step left of the image column. */
   @media (min-width: 64.01em) {
     .exp__title { margin-left: max(-2.5rem, calc(50% - 50vw + var(--gutter))); }
   }
 
-  /* ---------- DESKTOP: fixed-ratio box, absolutely placed children ---------- */
-  /* Box + child positions map directly to the section template's geometry.
-     The whole composition is capped and centred so it reads as one contained
-     spread with generous margins, rather than a block pinned to the left. */
-  .chapter {
-    position: relative;
-    aspect-ratio: 15 / 13;
-    max-width: 1040px;
-    margin-inline: auto;
-  }
+  .chapter { position: relative; max-width: 1040px; margin-inline: auto; }
+  .chapter + .chapter { margin-top: clamp(1rem, 2.5vw, 2.5rem); }
+
+  /* ---------- shared image + label bits ---------- */
   .chapter__lead,
   .chapter__inset { position: absolute; overflow: hidden; }
   .chapter__lead :global(img),
-  .chapter__inset :global(img) {
-    width: 100%; height: 100%;
-    object-fit: cover; display: block;
+  .chapter__inset :global(img),
+  .cer__lead :global(img),
+  .cer__inset :global(img) {
+    width: 100%; height: 100%; object-fit: cover; display: block;
   }
-
-  /* wide B&W lead, top-left */
-  .chapter__lead { top: 0; left: 0; width: 85%; height: 55%; z-index: 1; }
-
-  /* colour portrait, overlapping the lead's bottom-right and hanging below */
-  .chapter__inset { right: 0; bottom: 0; width: 38%; height: 61%; z-index: 2; }
-
-  /* label in the oat gap, just left of the portrait, near the lead's base */
+  .chapter__lead { z-index: 1; }
+  .chapter__inset,
+  .cer__inset {
+    z-index: 2;
+    border: clamp(3px, 0.3vw, 5px) solid var(--bg); /* oat cut */
+  }
   .chapter__label {
-    position: absolute; right: 40%; bottom: 38%; z-index: 3;
-    text-align: right;
+    z-index: 3;
     font-size: var(--text-xl);
     color: var(--ink);
     line-height: var(--leading-tight);
+    letter-spacing: normal;
   }
   .chapter__label em { font-style: italic; }
+
+  /* ---------- The Morning ---------- */
+  .chapter--morning { aspect-ratio: 15 / 13; }
+  .chapter--morning .chapter__lead  { top: 0; left: 0; width: 85%; height: 55%; }
+  .chapter--morning .chapter__inset { right: 0; bottom: 0; width: 38%; height: 61%; }
+  .chapter--morning .chapter__label { position: absolute; right: 40%; bottom: 38%; text-align: right; }
+
+  /* ---------- The Ceremony (full-bleed lead) ---------- */
+  .chapter--ceremony {
+    max-width: none; margin-inline: 0;
+    --cer-inset-w: clamp(240px, 30vw, 430px);
+  }
+
+  .cer__lead {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);       /* break out to full viewport width */
+    height: clamp(440px, 50vw, 720px);   /* taller — shows more of the couple */
+    overflow: hidden;
+  }
+  .cer__lead :global(img) { object-position: center 38%; }
+
+  .cer__foot {
+    position: relative;
+    display: flow-root;                  /* contain the inset's overlap without collapse */
+    /* shift the whole foot left so the inset lines up with the heading outdent,
+       then nudge it ~2cm back to the right */
+    margin-left: calc(max(-2.5rem, calc(50% - 50vw + var(--gutter))) + 2cm);
+  }
+  .cer__inset {
+    width: var(--cer-inset-w);           /* sits at the foot's left edge */
+    margin-top: clamp(-4.5rem, -5vw, -2.5rem); /* modest overlap into the band */
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    position: relative; z-index: 2;
+  }
+  .chapter--ceremony .chapter__label {
+    position: absolute;
+    top: clamp(0.75rem, 3vw, 2rem);                          /* up, near the band */
+    left: calc(var(--cer-inset-w) + clamp(0.75rem, 1.8vw, 1.5rem)); /* tight to the inset */
+    text-align: left;
+  }
 
   /* ---------- MOBILE: calm single column ---------- */
   @media (max-width: 64em) {
     .exp__title { margin-bottom: var(--space-md); }
 
-    .chapter {
-      position: static;
-      aspect-ratio: auto;
-      display: grid;
+    /* Morning */
+    .chapter--morning {
+      position: static; aspect-ratio: auto;
+      display: grid; row-gap: clamp(1rem, 3.5vw, 1.75rem);
+    }
+    .chapter--morning .chapter__lead,
+    .chapter--morning .chapter__inset {
+      position: static; inset: auto; width: 100%; height: auto;
+    }
+    .chapter--morning .chapter__label { position: static; inset: auto; font-size: var(--text-lg); }
+    .chapter--morning .chapter__lead  { order: 1; aspect-ratio: 3 / 2; }
+    .chapter--morning .chapter__label { order: 2; text-align: right; }
+    .chapter--morning .chapter__inset { order: 3; width: 74%; margin-left: auto; aspect-ratio: 2 / 3; }
+
+    /* Ceremony */
+    .cer__lead { height: auto; aspect-ratio: 3 / 2; }
+    .cer__lead :global(img) { object-position: center; }
+    .cer__foot {
+      display: flex; flex-direction: column; margin-left: 0;
+      margin-top: clamp(1rem, 3.5vw, 1.75rem);
       row-gap: clamp(1rem, 3.5vw, 1.75rem);
     }
-    .chapter__lead,
-    .chapter__inset {
-      position: static; inset: auto;
-      width: 100%; height: auto;
+    .chapter--ceremony .chapter__label {
+      position: static; top: auto; left: auto;
+      order: 1; font-size: var(--text-lg); text-align: left;
     }
-    .chapter__lead  { order: 1; aspect-ratio: 3 / 2; }
-    .chapter__label {
-      position: static; order: 2;
-      right: auto; bottom: auto;
-      text-align: right;
-      font-size: var(--text-lg);
-    }
-    .chapter__inset {
-      order: 3; width: 74%; margin-left: auto;
-      aspect-ratio: 2 / 3;
+    .cer__inset {
+      order: 2; width: 74%; margin-right: auto; margin-top: 0;
+      aspect-ratio: 4 / 5;
     }
   }
 </style>

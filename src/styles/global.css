@@ -1,5 +1,6 @@
 /* Reset + base. Utility classes shared across pages. */
 *, *::before, *::after { box-sizing: border-box; }
+html { overflow-x: clip; } /* contain full-bleed sections; clip keeps sticky nav working */
 * { margin: 0; }
 html { -webkit-text-size-adjust: 100%; }
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
@@ -11,6 +12,7 @@ body {
   font-weight: var(--fw-light);
   font-size: var(--text-base);
   line-height: var(--leading-body);
+  letter-spacing: -0.02em; /* -20 tracking, site-wide */
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -57,7 +59,7 @@ em, .italic { font-style: italic; }
 /* ---- Buttons ---- */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: .5em;
-  font-family: inherit; font-size: var(--text-sm); letter-spacing: .04em;
+  font-family: inherit; font-size: var(--text-sm); letter-spacing: -0.02em;
   padding: .85em 1.8em; border-radius: var(--radius);
   text-decoration: none; cursor: pointer; border: 1px solid transparent; white-space: nowrap;
   transition: background-color .3s ease, color .3s ease, border-color .3s ease;
