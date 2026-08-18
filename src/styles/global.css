@@ -38,7 +38,7 @@ em, .italic { font-style: italic; }
 
 /* ---- Layout utilities ---- */
 .container { width: min(var(--container), 100% - var(--gutter) * 2); margin-inline: auto; }
-.section { padding-block: var(--section-y); }
+.section { padding-top: var(--stack-gap); padding-bottom: 0; }
 .prose { max-width: var(--measure); }
 .prose + .prose { margin-top: var(--space-md); }
 

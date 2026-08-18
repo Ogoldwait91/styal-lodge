@@ -45,6 +45,7 @@
   --space-lg: 2.5rem;
   --space-xl: 4rem;
   --section-y: clamp(4rem, 2rem + 8vw, 9rem);
+  --stack-gap: calc(clamp(0.5rem, 1.5vw, 1.5rem) + clamp(2rem, 5vw, 4rem)); /* one gap for everything */
 
   /* Structure */
   --measure: 62ch;

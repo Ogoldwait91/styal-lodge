@@ -1,47 +1,160 @@
 ---
 /*
-  Feasting.astro — single-page, full-bleed hero for the Feasting section.
-  Cropped to frame the food board (with the table setting above); the building
-  at the very top of the photo is intentionally out of frame.
-  "Eat beautifully" sits top-left in oat (background colour), clear of the header.
+  Feasting.astro
+  1. Full-bleed hero photo, framed on the food board, with "Eat beautifully".
+  2. "Follow the Smoke" catering block — full-width dark panel (#3F3B38) with the
+     four menu pills. Each pill opens a pop-up (modal) with that menu.
+     Menu contents are placeholders — replace the text in the `menus` object below.
 */
 import { Image } from "astro:assets";
 import feasting from "../assets/feasting.jpg";
 ---
-<section id="feasting" class="feasting">
-  <Image
-    class="feasting__img"
-    src={feasting}
-    alt="A sharing board of feast food carried to an outdoor table at Styal Lodge"
-    widths={[800, 1200, 1600, 2000, 2181]}
-    sizes="100vw"
-    loading="lazy"
-  />
-  <p class="feasting__tagline"><em>Eat beautifully</em></p>
+<section id="feasting">
+  <div class="feasting">
+    <Image
+      class="feasting__img"
+      src={feasting}
+      alt="A sharing board of feast food carried to an outdoor table at Styal Lodge"
+      widths={[800, 1200, 1600, 2000, 2181]}
+      sizes="100vw"
+      loading="lazy"
+    />
+    <p class="feasting__tagline"><em>Eat beautifully</em></p>
+  </div>
+
+  <div class="smoke">
+    <div class="smoke__inner">
+      <h2 class="smoke__title">Follow the <em>Smoke</em><br />is our catering partner</h2>
+      <p class="smoke__lead">Together we have created a selection of<br /><em>seasonal</em> menus</p>
+
+      <div class="smoke__pills">
+        <button class="pill" type="button" data-menu="seasonal">Seasonal</button>
+        <button class="pill" type="button" data-menu="fire">Fire</button>
+        <button class="pill" type="button" data-menu="sharing">Sharing</button>
+        <button class="pill" type="button" data-menu="woodfire">Woodfire Pizza</button>
+      </div>
+
+      <p class="smoke__note smoke__note--italic">To find out about our next food &amp; wine tasting please contact us</p>
+      <p class="smoke__note">We also work with a selection of caterers for cultural and religious celebrations</p>
+    </div>
+
+    <dialog class="menu" id="menuDialog">
+      <button class="menu__close" type="button" aria-label="Close menu">&times;</button>
+      <h3 class="menu__title"></h3>
+      <div class="menu__body"></div>
+    </dialog>
+  </div>
 </section>
 
+<script>
+  // Replace the placeholder bodies with the real menus when you have them.
+  const menus = {
+    seasonal: { title: "Seasonal", body: "<p>Placeholder — add the Seasonal menu here.</p>" },
+    fire:     { title: "Fire",     body: "<p>Placeholder — add the Fire menu here.</p>" },
+    sharing:  { title: "Sharing",  body: "<p>Placeholder — add the Sharing menu here.</p>" },
+    woodfire: { title: "Woodfire Pizza", body: "<p>Placeholder — add the Woodfire Pizza menu here.</p>" },
+  };
+
+  const dialog = document.getElementById("menuDialog");
+  if (dialog) {
+    const titleEl = dialog.querySelector(".menu__title");
+    const bodyEl = dialog.querySelector(".menu__body");
+
+    document.querySelectorAll(".pill").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const m = menus[btn.dataset.menu];
+        if (!m) return;
+        titleEl.textContent = m.title;
+        bodyEl.innerHTML = m.body;
+        dialog.showModal();
+      });
+    });
+
+    dialog.querySelector(".menu__close").addEventListener("click", () => dialog.close());
+    dialog.addEventListener("click", (e) => {
+      const r = dialog.getBoundingClientRect();
+      const inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+      if (!inside) dialog.close();
+    });
+  }
+</script>
+
 <style>
+  /* ---------------- hero photo ---------------- */
+  #feasting { margin-top: var(--stack-gap); }        /* gap above the section (matches the rest) */
   .feasting {
     position: relative;
-    width: 100vw; margin-left: calc(50% - 50vw);   /* full-bleed */
-    height: 100svh;                                 /* one page */
-    overflow: hidden;
+    width: 100vw; margin-left: calc(50% - 50vw);
+    height: 100svh; overflow: hidden;
   }
-  .feasting__img {
-    width: 100%; height: 100%; object-fit: cover;
-    object-position: center 74%;                    /* frame the food board */
-    display: block;
-  }
+  .feasting__img { width: 100%; height: 100%; object-fit: cover; object-position: center 74%; display: block; }
   .feasting__tagline {
     position: absolute;
     top: calc(var(--header-h) + 0.35cm);
-    left: var(--gutter);
-    margin: 0;
-    color: var(--on-dark);
-    font-style: italic;
+    left: var(--gutter); margin: 0;
+    color: var(--on-dark); font-style: italic;
     font-size: clamp(1.7rem, 1rem + 3.6vw, 3.5rem);
-    line-height: 1;
-    letter-spacing: -0.02em;
+    line-height: 1; letter-spacing: -0.02em;
     text-shadow: 0 1px 18px rgba(20, 18, 16, .45);
   }
+
+  /* ---------------- Follow the Smoke ---------------- */
+  .smoke {
+    width: 100vw; margin-left: calc(50% - 50vw);
+    margin-top: var(--stack-gap);                    /* oat gap before the colour change */
+    background: #3F3B38;
+    color: var(--on-dark);
+    min-height: 100svh;
+    display: flex; align-items: flex-start;
+    padding-top: calc(var(--header-h) + clamp(1rem, 3vw, 2rem));
+    padding-bottom: clamp(3rem, 8vw, 6rem);
+  }
+  .smoke__inner { width: min(var(--container), 100% - var(--gutter) * 2); margin-inline: auto; }
+  .smoke__title {
+    font-family: var(--font-serif); font-weight: 400; color: var(--on-dark);
+    font-size: clamp(2rem, 1rem + 4.6vw, 3.8rem);
+    line-height: 1.08; letter-spacing: -0.02em;
+    max-width: none; margin: 0 0 clamp(1.25rem, 2.5vw, 1.75rem);
+  }
+  .smoke__title em { font-style: italic; }
+  .smoke__lead { font-size: var(--text-lg); max-width: none; margin: 0 0 clamp(2.5rem, 6vw, 4.5rem); }
+  .smoke__lead em { font-style: italic; }
+  .smoke__pills { display: flex; flex-direction: column; align-items: flex-start; gap: clamp(0.75rem, 1.4vw, 1.1rem); margin: 0 0 clamp(2.75rem, 7vw, 4.5rem); }
+  .pill {
+    min-width: clamp(230px, 26vw, 340px);
+    padding: clamp(0.7rem, 1.3vw, 1rem) 1.75rem;
+    background: var(--accent); color: var(--on-dark);
+    border: 0; border-radius: 999px;
+    font-family: var(--font-serif); font-size: var(--text-lg); letter-spacing: -0.01em;
+    cursor: pointer; transition: filter .2s ease, transform .2s ease;
+  }
+  .pill:hover { filter: brightness(1.08); transform: translateY(-1px); }
+  .pill:focus-visible { outline: 2px solid var(--on-dark); outline-offset: 3px; }
+  .smoke__note { font-size: var(--text-base); line-height: 1.5; max-width: 48ch; margin: 0 0 clamp(1.5rem, 3vw, 2rem); }
+  .smoke__note:last-child { margin-bottom: 0; }
+  .smoke__note--italic { font-style: italic; font-size: var(--text-lg); }
+
+  /* ---------------- menu pop-up ---------------- */
+  .menu {
+    margin: auto var(--gutter) auto auto;              /* right-aligned, vertically centred */
+    width: min(46%, 640px);
+    max-height: min(80vh, 640px); overflow: auto;
+    border: 0; border-radius: 6px;
+    padding: clamp(1.75rem, 4vw, 3rem);
+    background: var(--bg); color: var(--ink);
+    box-shadow: 0 30px 80px rgba(20, 18, 16, .35);
+  }
+  @media (max-width: 64em) {
+    .menu { margin: auto; width: min(560px, 100% - var(--gutter) * 2); }
+  }
+  .menu::backdrop { background: rgba(38, 34, 31, .6); backdrop-filter: blur(2px); }
+  .menu[open] { animation: menu-in .25s ease; }
+  @keyframes menu-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .menu__close { position: absolute; top: 0.75rem; right: 1rem; background: none; border: 0; cursor: pointer; font-size: 1.75rem; line-height: 1; color: var(--stone); }
+  .menu__close:hover { color: var(--ink); }
+  .menu__title { font-family: var(--font-serif); font-weight: 400; font-style: italic; font-size: var(--text-2xl); letter-spacing: -0.02em; margin: 0 0 1rem; color: var(--ink-strong); }
+  .menu__body { font-size: var(--text-base); line-height: 1.6; color: var(--stone); }
+  .menu__body :global(p) { margin: 0 0 0.75rem; }
+
+  @media (max-width: 40em) { .pill { width: 100%; } }
 </style>
