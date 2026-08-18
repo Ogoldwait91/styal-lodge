@@ -308,12 +308,12 @@ import partyInset from "../assets/party-inset.jpg";
     width: 100%; height: 100%; object-fit: cover; display: block;
   }
   .party__lead {
-    right: 0; bottom: 0; width: 64%; height: 64%; z-index: 1;               /* colour, on the right, behind */
+    right: 0; bottom: 0; width: 94%; height: 64%; z-index: 2;               /* colour, wider, in front */
+    border: clamp(3px, 0.3vw, 5px) solid var(--bg);                         /* oat cut */
   }
   .party__inset {
     top: 0; left: var(--party-inset-left);                                  /* B&W twirl, to the left */
-    width: var(--party-inset-w); height: 56%; z-index: 2;                   /* in front */
-    border: clamp(3px, 0.3vw, 5px) solid var(--bg);                         /* oat cut */
+    width: var(--party-inset-w); height: 42%; z-index: 1;                   /* behind the colour */
   }
   .party__label {
     position: absolute; z-index: 3; top: calc(26% - var(--label-shift-v)); text-align: left;
