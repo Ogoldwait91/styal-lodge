@@ -28,8 +28,13 @@
 <script>
   const cta = document.querySelector<HTMLElement>("[data-floating-cta]");
   if (cta) {
-    const reveal = () =>
-      cta.classList.toggle("is-visible", window.scrollY > window.innerHeight * 0.7);
+    const footer = document.querySelector<HTMLElement>(".site-footer");
+    const reveal = () => {
+      const pastHero = window.scrollY > window.innerHeight * 0.7;
+      // step aside once the footer (which has its own Book a visit link) comes into view
+      const overFooter = footer ? footer.getBoundingClientRect().top < window.innerHeight - 24 : false;
+      cta.classList.toggle("is-visible", pastHero && !overFooter);
+    };
     reveal();
     addEventListener("scroll", reveal, { passive: true });
   }

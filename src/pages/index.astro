@@ -30,5 +30,7 @@ const sections = [
 
 <style>
   .section .eyebrow { margin-bottom: var(--space-sm); }
+  /* the last section gets room to breathe before the footer */
+  .section:last-of-type { padding-bottom: calc(var(--stack-gap) * 1.75); }
   .section .display + .prose { margin-top: var(--space-md); }
 </style>
