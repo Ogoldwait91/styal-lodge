@@ -1,13 +1,9 @@
 ---
-const explore = [
+const links = [
   { label: "The Experience", href: "/#experience" },
   { label: "Feasting", href: "/#feasting" },
   { label: "Stories", href: "/#stories" },
   { label: "FAQs", href: "/#faqs" },
-];
-const plan = [
-  { label: "Details & Pricing", href: "/details-pricing" },
-  { label: "Book a visit", href: "/book-a-visit" },
 ];
 const year = new Date().getFullYear();
 ---
@@ -17,102 +13,59 @@ const year = new Date().getFullYear();
       <a class="site-footer__logo" href="/" aria-label="Styal Lodge — home">
         <img src="/logo-light.svg" width="971" height="617" alt="Styal Lodge" />
       </a>
-      <p class="site-footer__tagline">Every love story deserves<br />a beautiful beginning.</p>
+      <p class="site-footer__tagline">Every love story deserves a beautiful beginning.</p>
     </div>
 
-    <nav class="site-footer__col" aria-label="Explore">
-      <p class="site-footer__label">Explore</p>
-      <ul>{explore.map((l) => (<li><a href={l.href}>{l.label}</a></li>))}</ul>
+    <nav class="site-footer__nav" aria-label="Footer">
+      {links.map((l) => (<a href={l.href}>{l.label}</a>))}
     </nav>
 
-    <nav class="site-footer__col" aria-label="Plan">
-      <p class="site-footer__label">Plan</p>
-      <ul>{plan.map((l) => (<li><a href={l.href}>{l.label}</a></li>))}</ul>
-    </nav>
+    <address class="site-footer__contact">
+      Styal Lodge, Station Road, Styal, Cheshire SK9 4JN<br />
+      <a href="mailto:info@styallodge.co.uk">info@styallodge.co.uk</a><br />
+      <a href="tel:+441625416376">01625 416 376</a>
+    </address>
 
-    <div class="site-footer__col">
-      <p class="site-footer__label">Find us</p>
-      <address class="site-footer__contact">
-        Styal Lodge<br />
-        Station Road, Styal<br />
-        Cheshire SK9 4JN
-      </address>
-      <ul class="site-footer__reach">
-        <li><a href="mailto:info@styallodge.co.uk">info@styallodge.co.uk</a></li>
-        <li><a href="tel:+441625416376">01625 416 376</a></li>
-      </ul>
-    </div>
-
-    <div class="site-footer__base">
+    <p class="site-footer__legal">
       <span>&copy; {year} Styal Lodge</span>
-      <span class="site-footer__social">
-        <a href="https://www.instagram.com/styallodge/">Instagram</a>
-        <a href="https://www.tiktok.com/@styallodge">TikTok</a>
-      </span>
-    </div>
+      <span aria-hidden="true">·</span>
+      <a href="https://www.instagram.com/styallodge/">Instagram</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://www.tiktok.com/@styallodge">TikTok</a>
+    </p>
   </div>
 </footer>
 
 <style>
+  /* The original centred stack, with refined spacing and type. */
   .site-footer { background: var(--surface-dark); color: var(--on-dark); }
-
-  /* Desktop: brand on the left, three quiet columns, a hairline, then the small print. */
   .site-footer__inner {
-    display: grid;
-    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.3fr);
-    column-gap: clamp(1.5rem, 4vw, 4rem);
-    row-gap: clamp(2.5rem, 5vw, 4rem);
-    align-items: start;
-    padding-top: clamp(3.5rem, 2rem + 5vw, 6rem);
+    display: grid; justify-items: center; text-align: center;
+    gap: clamp(1.75rem, 1.25rem + 1.5vw, 2.5rem);
+    padding-top: clamp(3.5rem, 2rem + 5vw, 5.5rem);
     padding-bottom: clamp(1.5rem, 1rem + 1.5vw, 2.25rem);
   }
-
-  .site-footer__brand { display: grid; justify-items: start; gap: var(--space-md); }
-  .site-footer__logo img { height: clamp(64px, 5.5vw, 84px); width: auto; transform: translateX(-4.5%); } /* optical: line the letters up with the column edge */
+  .site-footer__brand { display: grid; justify-items: center; gap: var(--space-md); }
+  .site-footer__logo img { height: clamp(62px, 5vw, 76px); width: auto; }
   .site-footer__tagline {
-    margin: 0; font-style: italic; line-height: 1.45;
-    font-size: var(--text-base); letter-spacing: 0; color: var(--on-dark-muted);
+    margin: 0; font-style: italic; line-height: 1.4;
+    font-size: var(--text-lg); letter-spacing: 0; color: var(--on-dark-muted);
   }
-
-  .site-footer__label {
-    margin: 0 0 var(--space-sm);
-    text-transform: uppercase; letter-spacing: var(--tracking-wide);
-    font-size: var(--text-xs); color: var(--taupe);
-  }
-  .site-footer__col ul { list-style: none; padding: 0; margin: 0; display: grid; gap: .55rem; }
-  .site-footer__col,
-  .site-footer__contact { font-size: var(--text-sm); letter-spacing: 0.015em; line-height: 1.5; }
-  .site-footer__contact { font-style: normal; color: var(--on-dark-muted); line-height: 1.7; }
-  .site-footer__reach { margin-top: var(--space-sm) !important; }
-
-  .site-footer a { color: var(--on-dark); text-decoration: none; transition: color .25s ease; }
-  .site-footer__col a { opacity: .9; }
-  .site-footer a:hover { color: var(--on-dark-muted); }
-  .site-footer__logo:hover { opacity: 1; }
-
-  .site-footer__base {
-    grid-column: 1 / -1;
-    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: .75rem 2rem;
+  .site-footer__nav { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem clamp(1.25rem, 3vw, 2.5rem); }
+  .site-footer__nav a,
+  .site-footer__contact { font-size: var(--text-sm); letter-spacing: 0.015em; }
+  .site-footer__nav a { color: var(--on-dark); text-decoration: none; transition: color .25s ease; }
+  .site-footer__nav a:hover { color: var(--on-dark-muted); }
+  .site-footer__contact { font-style: normal; color: var(--on-dark-muted); line-height: 1.9; }
+  .site-footer__contact a { color: var(--on-dark); text-decoration: none; transition: color .25s ease; }
+  .site-footer__contact a:hover { color: var(--on-dark-muted); }
+  .site-footer__legal {
+    width: 100%; margin-top: clamp(.5rem, 1vw, 1rem);
     padding-top: clamp(1.25rem, 1rem + 1vw, 1.75rem);
     border-top: 1px solid rgba(244, 241, 234, .16);
+    display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem .75rem;
     font-size: var(--text-xs); letter-spacing: 0.03em; color: var(--on-dark-muted);
   }
-  .site-footer__social { display: flex; gap: 1.75rem; }
-  .site-footer__base a { color: var(--on-dark-muted); }
-  .site-footer__base a:hover { color: var(--on-dark); }
-
-  /* Tablet: brand across the top, three columns beneath. */
-  @media (max-width: 64em) {
-    .site-footer__inner { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .site-footer__brand { grid-column: 1 / -1; }
-  }
-
-  /* Phone: one centred column. */
-  @media (max-width: 40em) {
-    .site-footer__inner { grid-template-columns: 1fr; text-align: center; row-gap: 2.25rem; }
-    .site-footer__brand { justify-items: center; }
-    .site-footer__logo img { transform: none; }
-    .site-footer__col ul { justify-items: center; }
-    .site-footer__base { flex-direction: column-reverse; align-items: center; }
-  }
+  .site-footer__legal a { color: var(--on-dark-muted); text-decoration: none; transition: color .25s ease; }
+  .site-footer__legal a:hover { color: var(--on-dark); }
 </style>
