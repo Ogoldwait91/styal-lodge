@@ -66,9 +66,16 @@ const links = [
   .nav-cta {
     border: 1px solid rgba(63, 58, 54, .24);
     border-radius: 999px; padding: .5em 1.15em;
-    transition: color .25s ease, border-color .25s ease;
+    transition: color .25s ease, border-color .25s ease, background-color .35s ease;
   }
   .nav-cta:hover { color: var(--accent); border-color: var(--accent); }
+  /* Once the bar has taken over from the hero wordmark, the pill fills in sage: the one desktop action. */
+  .site-header.show-logo .nav-left .nav-cta {
+    background: var(--accent); border-color: var(--accent); color: var(--on-accent);
+  }
+  .site-header.show-logo .nav-left .nav-cta:hover {
+    background: var(--accent-hover); border-color: var(--accent-hover); color: var(--on-accent);
+  }
 
   .nav-left { display: flex; align-items: center; gap: clamp(1.25rem, 2.75vw, 2.25rem); }
   .primary-nav__links { display: flex; align-items: center; gap: clamp(1.25rem, 2.75vw, 2.25rem); list-style: none; padding: 0; margin: 0; }

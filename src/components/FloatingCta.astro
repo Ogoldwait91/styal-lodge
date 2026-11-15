@@ -19,6 +19,10 @@
   @media (prefers-reduced-motion: reduce) {
     .floating-cta { transition: opacity .2s linear; transform: none; }
   }
+  /* Desktop: the header bar is always on screen with its own Book a visit, so no floating copy. */
+  @media (min-width: 64.0625em) {
+    .floating-cta { display: none; }
+  }
 </style>
 
 <script>
