@@ -54,7 +54,7 @@ const links = [
 
   /* one shared link style for every header item, both sides */
   .nav-link {
-    font-size: var(--text-sm); letter-spacing: -0.02em; color: var(--ink);
+    font-size: calc(var(--text-sm) * 0.94); letter-spacing: 0.015em; color: var(--ink);
     text-decoration: none; padding-block: .25rem; transition: color .25s ease;
   }
   .nav-link:hover { color: var(--accent); }
@@ -65,9 +65,10 @@ const links = [
   }
   .nav-cta:hover { color: var(--accent); border-color: var(--accent); }
 
-  .nav-left { display: flex; gap: clamp(1.25rem, 2.75vw, 2.25rem); }
-  .primary-nav__links { display: flex; gap: clamp(1.25rem, 2.75vw, 2.25rem); list-style: none; padding: 0; margin: 0; }
-  .only-mobile { display: none; }
+  .nav-left { display: flex; align-items: center; gap: clamp(1.25rem, 2.75vw, 2.25rem); }
+  .primary-nav__links { display: flex; align-items: center; gap: clamp(1.25rem, 2.75vw, 2.25rem); list-style: none; padding: 0; margin: 0; }
+  .primary-nav__links li { display: flex; align-items: center; justify-content: center; }
+  .primary-nav__links li.only-mobile { display: none; }
 
   .nav-toggle {
     display: none; width: 44px; height: 44px; border: 0; background: none;
@@ -88,7 +89,7 @@ const links = [
   @media (max-width: 64em) {
     .nav-left { display: none; }
     .nav-toggle { display: inline-flex; }
-    .only-mobile { display: block; }
+    .primary-nav__links li.only-mobile { display: flex; }
     .primary-nav {
       position: fixed; inset: var(--header-h) 0 0 0;
       display: flex; flex-direction: column; justify-content: center; gap: 2.5rem;

@@ -54,3 +54,8 @@
   --header-h: 60px;
   --radius: 6px;
 }
+
+/* Desktop: a slightly slimmer header bar, which lifts the hero wordmark closer to the nav. */
+@media (min-width: 64.0625em) {
+  :root { --header-h: 50px; }
+}
