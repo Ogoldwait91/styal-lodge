@@ -226,40 +226,17 @@
     "note": "Your coordinator will confirm payment dates when you book.",
     "plans": [
       {
-        "id": "standard",
-        "name": "Booking fee in full",
-        "summary": "A 50% booking fee secures your date.",
+        "id": "deposit",
+        "name": "Deposit",
+        "summary": "A £500 deposit secures your date.",
         "steps": [
           {
-            "label": "Booking fee (50%)",
-            "share": 0.5,
+            "label": "Deposit",
+            "amount": 500,
             "when": "booking"
           },
           {
             "label": "Remaining balance",
-            "share": 0.5,
-            "when": "balance"
-          }
-        ]
-      },
-      {
-        "id": "split",
-        "name": "Booking fee in two instalments",
-        "summary": "The 50% booking fee split into two instalments of 25%.",
-        "steps": [
-          {
-            "label": "First instalment (25%)",
-            "share": 0.25,
-            "when": "booking"
-          },
-          {
-            "label": "Second instalment (25%)",
-            "share": 0.25,
-            "when": "agreed"
-          },
-          {
-            "label": "Remaining balance",
-            "share": 0.5,
             "when": "balance"
           }
         ]

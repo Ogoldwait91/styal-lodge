@@ -11,6 +11,7 @@ const MONTHS = ["January", "February", "March", "April", "May", "June", "July", 
 const fmt = (n: number) => "£" + (Number.isInteger(n) ? n.toLocaleString("en-GB") : n.toFixed(2));
 const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touches", "Payment plan"];
 const pending = (k: string) => pricing.pendingSections.includes(k);
+const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between, so the step is hidden
 const SEPARATE = "Priced separately. Your coordinator will take you through the options and prices.";
 ---
 <Base
@@ -178,7 +179,9 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
                 ))}
               </div>
             </fieldset>
-            <button type="button" class="calc-next" data-next>Next: {pending("extras") ? steps[5] : steps[4]}</button>
+            {pending("extras") && onePlan
+              ? <a class="calc-next calc-next--link" href="#estimate">See your estimate</a>
+              : <button type="button" class="calc-next" data-next>Next: {pending("extras") ? steps[5] : steps[4]}</button>}
           </div>
         </details>
 
@@ -204,12 +207,14 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
                 </label>
               ))}
             </div>
-            <button type="button" class="calc-next" data-next>Next: {steps[5]}</button>
+            {onePlan
+              ? <a class="calc-next calc-next--link" href="#estimate">See your estimate</a>
+              : <button type="button" class="calc-next" data-next>Next: {steps[5]}</button>}
           </div>
         </details>
 
         <!-- 6. Payment plan -->
-        <details class="calc-step" name="calc-step">
+        <details class="calc-step" name="calc-step" hidden={onePlan}>
           <summary>
             <span class="calc-step__num" aria-hidden="true"></span>
             <span class="calc-step__title">{steps[5]}</span>
@@ -245,7 +250,8 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
         <dl class="calc-lines" data-out="lines"></dl>
 
         <div class="calc-plan">
-          <p class="eyebrow">Payment plan · <span data-out="plan-name"></span></p>
+          <p class="eyebrow">{onePlan ? "Payments" : (<Fragment>Payment plan · <span data-out="plan-name"></span></Fragment>)}</p>
+          {onePlan && <span data-out="plan-name" hidden></span>}
           <ol class="calc-schedule" data-out="schedule"></ol>
           <p class="calc-hint" data-out="plan-note"></p>
         </div>
@@ -392,7 +398,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
     let paid = 0;
     plan.steps.forEach((s: any, i: number) => {
       const last = i === plan.steps.length - 1;
-      const amount = last ? Math.round(total) - paid : Math.round(total * s.share);
+      const amount = last ? Math.round(total) - paid : Math.min(Math.round(total) - paid, s.amount != null ? s.amount : Math.round(total * s.share));
       if (!last) paid += amount;
       const when = s.when === "booking" ? "When you book" : s.when === "balance" ? balanceWhen : "Date agreed with your coordinator";
       rows.push({ label: s.label, when, amount: pounds(amount) });
