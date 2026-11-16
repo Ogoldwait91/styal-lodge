@@ -10,6 +10,8 @@ import pricing from "../data/pricing.json";
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const fmt = (n: number) => "£" + (Number.isInteger(n) ? n.toLocaleString("en-GB") : n.toFixed(2));
 const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touches", "Payment plan"];
+const isSample = (k: string) => pricing.sampleSections.includes(k);
+const anySample = pricing.sampleSections.length > 0;
 ---
 <Base
   title="Wedding calculator — Styal Lodge"
@@ -22,8 +24,8 @@ const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touc
       <p class="eyebrow">Plan your day</p>
       <h1 class="display">Wedding <em>calculator</em></h1>
       <p class="calc-mast__lead">Choose your date, guests and menus to see an estimate and how the payments could be spread.</p>
-      {pricing.sample && (
-        <p class="calc-sample" role="note">Sample prices for layout review. These are not Styal Lodge's real prices.</p>
+      {anySample && (
+        <p class="calc-sample" role="note">Venue hire and winter prices are from the 2027 to 2029 price list. Anything tagged "Sample" is a placeholder.</p>
       )}
     </header>
 
@@ -43,7 +45,7 @@ const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touc
               <legend>Year</legend>
               <div class="calc-chips">
                 {pricing.years.map((y) => (
-                  <label class="calc-chip"><input type="radio" name="year" value={y.year} /><span>{y.year}</span></label>
+                  <label class="calc-chip"><input type="radio" name="year" value={y} /><span>{y}</span></label>
                 ))}
               </div>
             </fieldset>
@@ -63,6 +65,14 @@ const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touc
                 ))}
               </div>
             </fieldset>
+            <label class="calc-check calc-check--solo">
+              <input type="checkbox" name="holiday" value="1" />
+              <span class="calc-check__box" aria-hidden="true"></span>
+              <span class="calc-check__text">
+                <span class="calc-check__name">Bank or public holiday</span>
+                <span class="calc-check__note" data-out="holiday-note"></span>
+              </span>
+            </label>
             <div class="calc-field calc-field--quiet">
               <label for="f-date">Already have a date in mind? <span class="calc-opt">Optional</span></label>
               <div class="calc-date">
@@ -71,7 +81,7 @@ const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touc
               </div>
               <p class="calc-hint">Choosing a date fills in the year, month and day, and puts real dates on your payment plan.</p>
             </div>
-            <p class="calc-price-line">Exclusive use of the Lodge <strong data-out="hire-inline"></strong> <span data-out="season-inline"></span></p>
+            <p class="calc-price-line"><span data-out="hire-label"></span> <strong data-out="hire-inline"></strong> <span data-out="season-inline"></span></p>
             <button type="button" class="calc-next" data-next>Next: {steps[1]}</button>
           </div>
         </details>
@@ -86,9 +96,8 @@ const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touc
           </summary>
           <div class="calc-step__body">
             {[
-              { id: "adults", label: "Adults for the day", hint: "Ceremony, wedding breakfast and evening" },
-              { id: "children", label: "Children for the day", hint: "Charged at half the menu price" },
-              { id: "evening", label: "Extra evening guests", hint: "Joining for the party" },
+              { id: "day", label: "Day guests", hint: "Ceremony, wedding breakfast and evening" },
+              { id: "evening", label: "Evening-only guests", hint: "Joining for the party" },
             ].map((g) => (
               <div class="calc-stepper">
                 <div>
@@ -116,7 +125,9 @@ const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touc
             <span class="calc-step__chev" aria-hidden="true"></span>
           </summary>
           <div class="calc-step__body">
-            <fieldset class="calc-field">
+            <p class="calc-included" data-mode="winter">Included in your winter collection. {pricing.winter.includes}</p>
+            {isSample("feasting") && <p class="calc-tag" data-mode="summer">Sample prices</p>}
+            <fieldset class="calc-field" data-mode="summer">
               <legend>Wedding breakfast</legend>
               <div class="calc-cards">
                 {pricing.menus.map((m) => (
@@ -129,7 +140,7 @@ const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touc
                 ))}
               </div>
             </fieldset>
-            <fieldset class="calc-field">
+            <fieldset class="calc-field" data-mode="summer">
               <legend>Evening food</legend>
               <div class="calc-cards calc-cards--slim">
                 {pricing.eveningFood.map((m) => (
@@ -154,7 +165,9 @@ const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touc
             <span class="calc-step__chev" aria-hidden="true"></span>
           </summary>
           <div class="calc-step__body">
-            <fieldset class="calc-field">
+            <p class="calc-included" data-mode="winter">Drinks are included in your winter collection.</p>
+            {isSample("drinks") && <p class="calc-tag" data-mode="summer">Sample prices</p>}
+            <fieldset class="calc-field" data-mode="summer">
               <legend class="visually-hidden">Drinks package</legend>
               <div class="calc-cards calc-cards--slim">
                 {pricing.drinks.map((d) => (
@@ -162,7 +175,7 @@ const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touc
                     <input type="radio" name="drinks" value={d.id} />
                     <span class="calc-card__name">{d.name}</span>
                     <span class="calc-card__blurb">{d.blurb}</span>
-                    <span class="calc-card__price">{d.perHead > 0 ? (<Fragment><span data-price={d.perHead}>{fmt(d.perHead)}</span> per adult</Fragment>) : "No charge"}</span>
+                    <span class="calc-card__price">{d.perHead > 0 ? (<Fragment><span data-price={d.perHead}>{fmt(d.perHead)}</span> per guest</Fragment>) : "No charge"}</span>
                   </label>
                 ))}
               </div>
@@ -180,9 +193,10 @@ const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touc
             <span class="calc-step__chev" aria-hidden="true"></span>
           </summary>
           <div class="calc-step__body">
+            {isSample("extras") && <p class="calc-tag">Sample prices</p>}
             <div class="calc-checks">
               {pricing.extras.map((x) => (
-                <label class="calc-check">
+                <label class="calc-check" data-mode={x.summerOnly ? "summer" : undefined}>
                   <input type="checkbox" name="extras" value={x.id} />
                   <span class="calc-check__box" aria-hidden="true"></span>
                   <span class="calc-check__text">
@@ -206,6 +220,7 @@ const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touc
             <span class="calc-step__chev" aria-hidden="true"></span>
           </summary>
           <div class="calc-step__body">
+            {isSample("paymentTiming") && <p class="calc-tag">Sample plans and timings</p>}
             <fieldset class="calc-field">
               <legend class="visually-hidden">Payment plan</legend>
               <div class="calc-cards calc-cards--slim">
@@ -246,8 +261,8 @@ const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touc
 
         <p class="calc-smallprint">
           <span data-out="prepared"></span>
-          An estimate, not a quotation. Prices and dates are subject to availability and confirmed in your contract.
-          {pricing.sample && " Sample prices shown for layout review."}
+          An estimate, not a quotation. All rates include VAT and are subject to change; prices and dates are confirmed in your contract.
+          {anySample && " Items tagged Sample are placeholders."}
         </p>
       </aside>
     </div>
@@ -277,22 +292,23 @@ const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touc
   const today = new Date(); today.setHours(0, 0, 0, 0);
 
   // ---------- state ----------
-  const years: number[] = P.years.map((y: any) => y.year);
+  const years: number[] = P.years;
   const firstYear = years.find((y) => y > today.getFullYear()) ?? years[years.length - 1];
   const state: any = {
-    date: "", year: firstYear, month: 6, dayType: "sat",
-    adults: P.guests.defaultDay, children: P.guests.defaultChildren, evening: P.guests.defaultEvening,
+    date: "", year: firstYear, month: 6, dayType: "sat", holiday: false,
+    day: P.guests.defaultDay, evening: P.guests.defaultEvening,
     menu: P.menus[0].id, eveFood: P.eveningFood[0].id, drinks: P.drinks[1]?.id ?? P.drinks[0].id,
     extras: [] as string[], plan: P.payment.plans[0].id,
   };
 
   // restore from a shared link
   const q = new URLSearchParams(location.search);
-  const has = (list: any[], id: string | null) => !!id && list.some((x) => String(x.id ?? x.year ?? x) === id);
-  if (has(P.years.map((y: any) => ({ id: y.year })), q.get("y"))) state.year = Number(q.get("y"));
+  const has = (list: any[], id: string | null) => !!id && list.some((x) => String(x.id) === id);
+  if (q.get("y") && years.includes(Number(q.get("y")))) state.year = Number(q.get("y"));
   if (q.get("m") && +q.get("m")! >= 1 && +q.get("m")! <= 12) state.month = +q.get("m")!;
   if (has(P.dayTypes, q.get("d"))) state.dayType = q.get("d");
-  for (const [key, param] of [["adults", "a"], ["children", "c"], ["evening", "e"]] as const) {
+  state.holiday = q.get("h") === "1";
+  for (const [key, param] of [["day", "g"], ["evening", "e"]] as const) {
     const v = q.get(param); if (v !== null && /^\d{1,3}$/.test(v)) state[key] = +v;
   }
   if (has(P.menus, q.get("menu"))) state.menu = q.get("menu");
@@ -303,10 +319,7 @@ const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touc
   if (q.get("date") && /^\d{4}-\d{2}-\d{2}$/.test(q.get("date")!)) state.date = q.get("date");
 
   // ---------- helpers ----------
-  const seasonOf = (month: number) => Object.keys(P.seasons).find((k) => P.seasons[k].months.includes(month)) ?? Object.keys(P.seasons)[0];
-  const upliftOf = (year: number) => P.years.find((y: any) => y.year === year)?.uplift ?? 0;
-  const perHead = (base: number) => Math.round(base * (1 + upliftOf(state.year)) * 2) / 2;      // to the nearest 50p
-  const flat = (base: number) => Math.round((base * (1 + upliftOf(state.year))) / 10) * 10;     // to the nearest £10
+  const isWinter = () => P.winter.months.includes(state.month);
   const parseDate = (s: string) => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
   const addMonths = (d: Date, n: number) => { const r = new Date(d); const day = r.getDate(); r.setDate(1); r.setMonth(r.getMonth() + n); r.setDate(Math.min(day, new Date(r.getFullYear(), r.getMonth() + 1, 0).getDate())); return r; };
 
@@ -318,54 +331,56 @@ const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touc
     state.dayType = P.dayTypes.find((t: any) => t.days.includes(d.getDay()))?.id ?? state.dayType;
   }
 
-  function clampGuests(changed?: string) {
+  function clampGuests() {
     const g = P.guests;
-    state.adults = Math.max(0, Math.round(state.adults || 0));
-    state.children = Math.max(0, Math.round(state.children || 0));
-    state.evening = Math.max(0, Math.round(state.evening || 0));
-    if (state.adults + state.children > g.maxDay) {
-      if (changed === "children") state.children = Math.max(0, g.maxDay - state.adults);
-      else state.adults = Math.max(0, g.maxDay - state.children);
-    }
-    if (state.adults < 2) state.adults = 2;
-    state.evening = Math.min(state.evening, Math.max(0, g.maxEveningTotal - state.adults - state.children));
+    state.day = Math.min(g.maxDay, Math.max(2, Math.round(state.day || 0)));
+    state.evening = Math.min(Math.max(0, Math.round(state.evening || 0)), Math.max(0, g.maxEveningTotal - state.day));
   }
 
   // ---------- calculation ----------
   function calculate() {
-    const season = seasonOf(state.month);
-    const dayGuests = state.adults + state.children;
-    const eveningTotal = dayGuests + state.evening;
+    const winter = isWinter();
+    const dayType = P.dayTypes.find((t: any) => t.id === state.dayType);
+    const eveningTotal = state.day + state.evening;
     const menu = P.menus.find((m: any) => m.id === state.menu);
     const eve = P.eveningFood.find((m: any) => m.id === state.eveFood);
     const drinks = P.drinks.find((m: any) => m.id === state.drinks);
-    const dayType = P.dayTypes.find((t: any) => t.id === state.dayType);
     const lines: { label: string; detail: string; amount: number }[] = [];
+    const when = state.holiday ? "Bank holiday" : dayType.short;
+    let base = 0; let baseLabel = ""; let priced = true;
 
-    const hire = flat(P.venueHire[season][state.dayType]);
-    lines.push({ label: "Exclusive use of the Lodge", detail: `${dayType.short}, ${P.seasons[season].label.toLowerCase()}`, amount: hire });
-
-    const menuPrice = perHead(menu.perHead);
-    const childPrice = Math.round(menuPrice * P.guests.childRate * 2) / 2;
-    lines.push({ label: `${menu.name} menu`, detail: `${plural(state.adults, "adult", "adults")} at ${money(menuPrice)}`, amount: state.adults * menuPrice });
-    if (state.children > 0) lines.push({ label: "Children's menu", detail: `${plural(state.children, "child", "children")} at ${money(childPrice)}`, amount: state.children * childPrice });
-
-    if (eve.perHead > 0) {
-      const p = perHead(eve.perHead);
-      lines.push({ label: `Evening food: ${eve.name.toLowerCase()}`, detail: `${plural(eveningTotal, "guest", "guests")} at ${money(p)}`, amount: eveningTotal * p });
+    if (winter) {
+      const c = P.winter.collection[String(state.year)];
+      baseLabel = `Winter collection for ${P.winter.includedGuests} guests`;
+      if (!c) priced = false;
+      else {
+        const peak = state.holiday || P.winter.peakDays.includes(state.dayType);
+        base = peak ? c.peak : c.offPeak;
+        lines.push({ label: baseLabel, detail: `${when}, ${state.year}. Food, drinks and styling included`, amount: base });
+        const extra = Math.max(0, state.day - P.winter.includedGuests);
+        if (extra > 0) lines.push({ label: "Additional day guests", detail: `${extra} at ${money(c.extraDayGuest)}`, amount: extra * c.extraDayGuest });
+        if (state.evening > 0) lines.push({ label: "Evening-only guests", detail: `${state.evening} at ${money(c.eveningGuest)}`, amount: state.evening * c.eveningGuest });
+      }
+    } else {
+      const table = P.summer.hire[String(state.year)];
+      baseLabel = "Exclusive use of the Lodge";
+      if (!table) priced = false;
+      else {
+        base = table[state.holiday ? P.summer.holidayRate : state.dayType];
+        lines.push({ label: baseLabel, detail: `${when}, ${P.summer.label.toLowerCase().replace("styal", "Styal")} ${state.year}`, amount: base });
+        lines.push({ label: `${menu.name} menu`, detail: `${plural(state.day, "guest", "guests")} at ${money(menu.perHead)}`, amount: state.day * menu.perHead });
+        if (eve.perHead > 0) lines.push({ label: eve.name, detail: `${plural(eveningTotal, "guest", "guests")} at ${money(eve.perHead)}`, amount: eveningTotal * eve.perHead });
+        if (drinks.perHead > 0) lines.push({ label: `${drinks.name} drinks`, detail: `${plural(state.day, "guest", "guests")} at ${money(drinks.perHead)}`, amount: state.day * drinks.perHead });
+      }
     }
-    if (drinks.perHead > 0) {
-      const p = perHead(drinks.perHead);
-      lines.push({ label: `${drinks.name} drinks`, detail: `${plural(state.adults, "adult", "adults")} at ${money(p)}`, amount: state.adults * p });
-    }
-    for (const id of state.extras) {
-      const x = P.extras.find((e: any) => e.id === id); if (!x) continue;
-      if (x.per === "dayGuest") { const p = perHead(x.price); lines.push({ label: x.name, detail: `${plural(dayGuests, "guest", "guests")} at ${money(p)}`, amount: dayGuests * p }); }
-      else lines.push({ label: x.name, detail: "", amount: flat(x.price) });
+    if (priced) for (const id of state.extras) {
+      const x = P.extras.find((e: any) => e.id === id); if (!x || (winter && x.summerOnly)) continue;
+      if (x.per === "dayGuest") lines.push({ label: x.name, detail: `${plural(state.day, "guest", "guests")} at ${money(x.price)}`, amount: state.day * x.price });
+      else lines.push({ label: x.name, detail: "", amount: x.price });
     }
     lines.forEach((l) => (l.amount = Math.round(l.amount)));   // whole pounds, so the lines always add up to the total
     const total = lines.reduce((s, l) => s + l.amount, 0);
-    return { season, dayType, dayGuests, eveningTotal, menu, eve, drinks, lines, total, hire };
+    return { winter, dayType, eveningTotal, menu, eve, drinks, lines, total, base, baseLabel, priced, when };
   }
 
   function schedule(total: number) {
@@ -411,7 +426,8 @@ const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touc
   function syncInputs() {
     (form.elements.namedItem("month") as HTMLSelectElement).value = String(state.month);
     (form.elements.namedItem("date") as HTMLInputElement).value = state.date;
-    for (const k of ["adults", "children", "evening"]) (form.elements.namedItem(k) as HTMLInputElement).value = String(state[k]);
+    (form.elements.namedItem("holiday") as HTMLInputElement).checked = state.holiday;
+    for (const k of ["day", "evening"]) (form.elements.namedItem(k) as HTMLInputElement).value = String(state[k]);
     for (const k of ["year", "dayType", "menu", "eveFood", "drinks", "plan"])
       form.querySelectorAll<HTMLInputElement>(`input[name="${k}"]`).forEach((el) => (el.checked = el.value === String(state[k])));
     form.querySelectorAll<HTMLInputElement>('input[name="extras"]').forEach((el) => (el.checked = state.extras.includes(el.value)));
@@ -420,56 +436,65 @@ const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touc
 
   function render() {
     const r = calculate();
-    const s = schedule(r.total);
     const g = P.guests;
+    const season = r.winter ? P.winter : P.summer;
 
-    // prices on the option cards follow the chosen year
-    document.querySelectorAll<HTMLElement>("[data-price]").forEach((el) => {
-      const base = Number(el.dataset.price);
-      const isFlat = el.hasAttribute("data-flat");
-      el.textContent = money(isFlat ? flat(base) : perHead(base));
-    });
+    // show the sections that apply to this season
+    document.querySelectorAll<HTMLElement>("[data-mode]").forEach((el) => (el.hidden = el.dataset.mode !== (r.winter ? "winter" : "summer")));
 
-    const when = state.date ? longDate(parseDate(state.date)) : `${r.dayType.short} · ${MONTHS[state.month - 1]} ${state.year}`;
+    const when = state.date ? longDate(parseDate(state.date)) : `${r.when} · ${MONTHS[state.month - 1]} ${state.year}`;
     $("s-date").textContent = when;
-    $("hire-inline").textContent = pounds(r.hire);
-    $("season-inline").textContent = `(${P.seasons[r.season].label.toLowerCase()})`;
-    $("s-guests").textContent = `${r.dayGuests} day · ${r.eveningTotal} evening`;
+    $("hire-label").textContent = r.baseLabel;
+    $("hire-inline").textContent = r.priced ? pounds(r.base) : "to be confirmed";
+    $("season-inline").textContent = `(${season.label})`;
+    $("holiday-note").textContent = r.winter ? "Charged at the Friday to Sunday rate" : "Charged at the Saturday rate";
+    $("s-guests").textContent = `${state.day} day · ${r.eveningTotal} evening`;
     $("guest-note").textContent = `The Lodge welcomes up to ${g.maxDay} guests for the wedding breakfast and ${g.maxEveningTotal} in the evening.` +
-      (r.dayGuests < g.minDay ? ` Weddings here usually start from ${g.minDay} day guests; smaller celebrations are priced individually.` : "");
-    $("s-food").textContent = r.eve.perHead > 0 ? `${r.menu.name} · ${r.eve.name}` : r.menu.name;
-    $("s-drinks").textContent = r.drinks.name;
-    $("s-extras").textContent = state.extras.length ? plural(state.extras.length, "extra", "extras") : "None chosen";
-    $("s-plan").textContent = s.plan.name;
+      (r.winter ? ` The winter collection is priced for ${P.winter.includedGuests} guests, with additional guests charged separately.` : "");
+    $("s-food").textContent = r.winter ? "Included" : (r.eve.perHead > 0 ? `${r.menu.name} · ${r.eve.name}` : r.menu.name);
+    $("s-drinks").textContent = r.winter ? "Included" : r.drinks.name;
+    const chosen = state.extras.filter((id: string) => { const x = P.extras.find((e: any) => e.id === id); return x && !(r.winter && x.summerOnly); });
+    $("s-extras").textContent = chosen.length ? plural(chosen.length, "extra", "extras") : "None chosen";
 
-    $("total").textContent = pounds(r.total);
-    $("bar-total").textContent = pounds(r.total);
-    $("per-guest").textContent = `About ${pounds(r.total / Math.max(1, r.dayGuests))} per day guest`;
-    $("context").textContent = `${when} · ${plural(r.dayGuests, "day guest", "day guests")}` + (state.evening ? `, ${state.evening} more in the evening` : "");
+    const summary = document.getElementById("estimate")!;
+    summary.classList.toggle("is-unpriced", !r.priced);
+    $("context").textContent = `${season.label} · ${when} · ${plural(state.day, "day guest", "day guests")}` + (state.evening ? `, ${state.evening} more in the evening` : "");
 
-    $("lines").replaceChildren(...r.lines.map((l) => {
-      const row = document.createElement("div"); row.className = "calc-line";
-      const dt = document.createElement("dt"); dt.textContent = l.label;
-      if (l.detail) { const sm = document.createElement("small"); sm.textContent = l.detail; dt.append(sm); }
-      const dd = document.createElement("dd"); dd.textContent = pounds(l.amount);
-      row.append(dt, dd); return row;
-    }));
-
-    $("plan-name").textContent = s.plan.name;
-    $("schedule").replaceChildren(...s.rows.map((p) => {
-      const li = document.createElement("li");
-      const a = document.createElement("span"); a.className = "calc-schedule__what"; a.textContent = p.label;
-      const w = document.createElement("small"); w.textContent = p.when; a.append(w);
-      const b = document.createElement("span"); b.className = "calc-schedule__amt"; b.textContent = p.amount;
-      li.append(a, b); return li;
-    }));
-    $("plan-note").textContent = s.note;
+    if (!r.priced) {
+      $("total").textContent = "To be confirmed";
+      $("bar-total").textContent = "To be confirmed";
+      $("per-guest").textContent = `${season.label} prices for ${state.year} have not been released yet. Please ask your coordinator.`;
+      $("lines").replaceChildren(); $("schedule").replaceChildren(); $("plan-note").textContent = "";
+      $("s-plan").textContent = P.payment.plans.find((p: any) => p.id === state.plan).name; $("plan-name").textContent = $("s-plan").textContent;
+    } else {
+      const s = schedule(r.total);
+      $("s-plan").textContent = s.plan.name;
+      $("total").textContent = pounds(r.total);
+      $("bar-total").textContent = pounds(r.total);
+      $("per-guest").textContent = `About ${pounds(r.total / Math.max(1, state.day))} per day guest`;
+      $("lines").replaceChildren(...r.lines.map((l) => {
+        const row = document.createElement("div"); row.className = "calc-line";
+        const dt = document.createElement("dt"); dt.textContent = l.label;
+        if (l.detail) { const sm = document.createElement("small"); sm.textContent = l.detail; dt.append(sm); }
+        const dd = document.createElement("dd"); dd.textContent = pounds(l.amount);
+        row.append(dt, dd); return row;
+      }));
+      $("plan-name").textContent = s.plan.name;
+      $("schedule").replaceChildren(...s.rows.map((p) => {
+        const li = document.createElement("li");
+        const a = document.createElement("span"); a.className = "calc-schedule__what"; a.textContent = p.label;
+        const w = document.createElement("small"); w.textContent = p.when; a.append(w);
+        const b = document.createElement("span"); b.className = "calc-schedule__amt"; b.textContent = p.amount;
+        li.append(a, b); return li;
+      }));
+      $("plan-note").textContent = s.note;
+    }
     $("prepared").textContent = `Prepared ${longDate(today)}. `;
 
     // keep the address bar shareable
     const u = new URLSearchParams();
-    u.set("y", state.year); u.set("m", state.month); u.set("d", state.dayType);
-    u.set("a", state.adults); u.set("c", state.children); u.set("e", state.evening);
+    u.set("y", state.year); u.set("m", state.month); u.set("d", state.dayType); if (state.holiday) u.set("h", "1");
+    u.set("g", state.day); u.set("e", state.evening);
     u.set("menu", state.menu); u.set("eve", state.eveFood); u.set("dr", state.drinks); u.set("plan", state.plan);
     if (state.extras.length) u.set("x", state.extras.join("."));
     if (state.date) u.set("date", state.date);
@@ -487,7 +512,8 @@ const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touc
     else if (t.name === "year" || t.name === "dayType") { state[t.name] = t.name === "year" ? Number(t.value) : t.value; state.date = ""; }
     else if (t.name === "month") { state.month = Number(t.value); state.date = ""; }
     else if (t.name === "extras") state.extras = [...form.querySelectorAll<HTMLInputElement>('input[name="extras"]:checked')].map((el) => el.value);
-    else if (["adults", "children", "evening"].includes(t.name)) { state[t.name] = Number(t.value); clampGuests(t.name); }
+    else if (t.name === "holiday") state.holiday = t.checked;
+    else if (["day", "evening"].includes(t.name)) { state[t.name] = Number(t.value); clampGuests(); }
     else if (t.name) state[t.name] = t.value;
     syncInputs(); render();
   });
@@ -497,10 +523,10 @@ const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touc
     const el = (e.target as HTMLElement).closest<HTMLElement>("[data-step],[data-next],[data-clear-date]");
     if (!el) return;
     if (el.dataset.step) {
-      const k = el.dataset.step; const jump = k === "children" ? 1 : 5;
+      const k = el.dataset.step; const jump = 5;
       const cur = state[k]; const dir = Number(el.dataset.dir);
       state[k] = dir > 0 ? Math.floor(cur / jump) * jump + jump : Math.ceil(cur / jump) * jump - jump;
-      clampGuests(k); syncInputs(); render();
+      clampGuests(); syncInputs(); render();
     } else if (el.hasAttribute("data-clear-date")) { state.date = ""; syncInputs(); render(); }
     else if (el.hasAttribute("data-next")) {
       const cur = el.closest("details")!; const next = cur.nextElementSibling as HTMLDetailsElement | null;
@@ -543,7 +569,7 @@ const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touc
   .calc-mast .eyebrow { margin-bottom: var(--space-sm); }
   .calc-mast__lead { margin-top: var(--space-xs); max-width: 52ch; color: var(--stone); font-size: var(--text-sm); letter-spacing: 0.01em; }
   .calc-sample {
-    margin-top: var(--space-md); padding: .5em 1.1em; border: 1px dashed var(--taupe); border-radius: 999px;
+    margin-top: var(--space-md); max-width: 60ch; line-height: 1.5; padding: .6em 1.2em; border: 1px dashed var(--taupe); border-radius: var(--radius);
     font-size: var(--text-xs); letter-spacing: 0.04em; color: var(--stone);
   }
 
@@ -642,6 +668,13 @@ const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touc
   .calc-check__name { font-size: var(--text-base); line-height: 1.3; }
   .calc-check__note { font-size: var(--text-xs); color: var(--stone); }
   .calc-check__price { font-size: var(--text-sm); white-space: nowrap; }
+
+  .calc-check--solo { border-bottom: 0; padding: 0; grid-template-columns: auto 1fr; }
+  .calc-tag { justify-self: start; font-size: var(--text-xs); letter-spacing: 0.06em; text-transform: uppercase; color: var(--stone); border: 1px dashed var(--taupe); border-radius: 999px; padding: .15em .9em; }
+  .calc-included { font-size: var(--text-base); color: var(--ink); background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius); padding: 1rem 1.15rem; line-height: 1.55; }
+  .calc-page [hidden] { display: none !important; }
+  .calc-summary.is-unpriced .calc-summary__total { font-size: var(--text-2xl); line-height: 1.1; }
+  .calc-summary.is-unpriced :is(.calc-lines, .calc-plan) { display: none; }
 
   .calc-next {
     justify-self: start; display: inline-flex; align-items: center; min-height: 46px; padding: 0 1.6em; cursor: pointer;

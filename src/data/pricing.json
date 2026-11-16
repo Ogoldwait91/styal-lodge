@@ -1,37 +1,36 @@
 {
-  "_readme": "All calculator prices live here. Change a number, save, and the page updates. 'sample: true' shows a banner saying these are sample prices; set it to false once real prices are in.",
-  "sample": true,
-  "vatNote": "Sample prices only.",
-  "years": [
-    { "year": 2027, "uplift": 0 },
-    { "year": 2028, "uplift": 0.04 },
-    { "year": 2029, "uplift": 0.08 }
-  ],
-  "seasons": {
-    "high": { "label": "High season", "months": [5, 6, 7, 8, 9] },
-    "mid": { "label": "Mid season", "months": [4, 10, 12] },
-    "low": { "label": "Low season", "months": [1, 2, 3, 11] }
-  },
+  "_readme": "All calculator prices live here. Venue hire and the winter collection come from the Styal Lodge 2027-2029 price list (all inclusive of VAT). Anything listed in 'sampleSections' is still a placeholder and shows a 'Sample prices' tag on the page; remove a name from that list once its real prices are in.",
+  "sampleSections": ["feasting", "drinks", "extras", "paymentTiming"],
+  "years": [2027, 2028, 2029],
   "dayTypes": [
-    { "id": "monThu", "label": "Monday to Thursday", "short": "Mon–Thu", "days": [1, 2, 3, 4] },
+    { "id": "monWed", "label": "Monday to Wednesday", "short": "Mon–Wed", "days": [1, 2, 3] },
+    { "id": "thu", "label": "Thursday", "short": "Thursday", "days": [4] },
     { "id": "fri", "label": "Friday", "short": "Friday", "days": [5] },
     { "id": "sat", "label": "Saturday", "short": "Saturday", "days": [6] },
     { "id": "sun", "label": "Sunday", "short": "Sunday", "days": [0] }
   ],
-  "venueHire": {
-    "high": { "monThu": 4000, "fri": 6000, "sat": 7500, "sun": 5000 },
-    "mid": { "monThu": 3200, "fri": 4800, "sat": 6000, "sun": 4000 },
-    "low": { "monThu": 2500, "fri": 3600, "sat": 4500, "sun": 3000 }
+  "summer": {
+    "label": "Summer in Styal",
+    "months": [4, 5, 6, 7, 8, 9],
+    "holidayRate": "sat",
+    "hire": {
+      "2027": { "monWed": 4750, "thu": 5250, "fri": 5500, "sat": 5750, "sun": 5500 },
+      "2028": { "monWed": 5500, "thu": 5750, "fri": 6000, "sat": 6250, "sun": 6000 },
+      "2029": { "monWed": 5500, "thu": 5750, "fri": 6000, "sat": 6250, "sun": 6000 }
+    }
   },
-  "guests": {
-    "minDay": 50,
-    "maxDay": 160,
-    "maxEveningTotal": 180,
-    "childRate": 0.5,
-    "defaultDay": 90,
-    "defaultChildren": 0,
-    "defaultEvening": 30
+  "winter": {
+    "label": "Winter in Styal",
+    "months": [10, 11, 12, 1, 2, 3],
+    "includedGuests": 50,
+    "peakDays": ["fri", "sat", "sun"],
+    "includes": "Food, drinks, essential wedding styling and dedicated coordination are included, alongside exclusive use of the Lodge.",
+    "collection": {
+      "2027": { "offPeak": 6750, "peak": 8000, "extraDayGuest": 75, "eveningGuest": 15 },
+      "2028": { "offPeak": 7750, "peak": 9000, "extraDayGuest": 90, "eveningGuest": 15 }
+    }
   },
+  "guests": { "maxDay": 160, "maxEveningTotal": 180, "defaultDay": 80, "defaultEvening": 30 },
   "menus": [
     { "id": "seasonal", "name": "Seasonal", "blurb": "Three courses that follow the season.", "perHead": 85 },
     { "id": "fire", "name": "Fire", "blurb": "Cooked over flame and served to the table.", "perHead": 95 },
@@ -40,7 +39,7 @@
   ],
   "eveningFood": [
     { "id": "none", "name": "No evening food", "perHead": 0 },
-    { "id": "pizza", "name": "Woodfire pizza", "perHead": 14 },
+    { "id": "pizza", "name": "Evening pizza", "perHead": 14 },
     { "id": "rolls", "name": "Smoked brisket rolls", "perHead": 12 }
   ],
   "drinks": [
@@ -49,43 +48,20 @@
     { "id": "signature", "name": "Signature", "blurb": "Champagne reception, premium wines and a toast.", "perHead": 46 }
   ],
   "extras": [
-    { "id": "ceremony", "name": "Ceremony at the Lodge", "note": "Use of the licensed ceremony room", "price": 650, "per": "flat" },
     { "id": "canapes", "name": "Canapés", "note": "Served during garden drinks", "price": 9.5, "per": "dayGuest" },
-    { "id": "styling", "name": "Venue styling", "note": "Florals, candles and table styling", "price": 950, "per": "flat" },
+    { "id": "styling", "name": "Venue styling", "note": "Florals, candles and table styling", "price": 950, "per": "flat", "summerOnly": true },
     { "id": "grazing", "name": "Cheese and grazing table", "note": "For the evening", "price": 480, "per": "flat" },
     { "id": "dessert", "name": "Live-fire dessert station", "note": "Toasted over the coals", "price": 7, "per": "dayGuest" }
   ],
   "payment": {
     "balanceWeeksBefore": 8,
     "plans": [
-      {
-        "id": "standard",
-        "name": "Standard",
-        "summary": "50% to secure your date, the balance before the day.",
-        "steps": [
-          { "label": "Booking fee", "share": 0.5, "when": "booking" },
-          { "label": "Final balance", "share": 0.5, "when": "balance" }
-        ]
-      },
-      {
-        "id": "split",
-        "name": "Split booking fee",
-        "summary": "The booking fee in two instalments of 25%.",
-        "steps": [
-          { "label": "First instalment", "share": 0.25, "when": "booking" },
-          { "label": "Second instalment", "share": 0.25, "when": "monthsAfterBooking", "months": 3 },
-          { "label": "Final balance", "share": 0.5, "when": "balance" }
-        ]
-      },
-      {
-        "id": "monthly",
-        "name": "Monthly",
-        "summary": "25% to secure your date, then equal monthly payments.",
-        "steps": [
-          { "label": "Booking fee", "share": 0.25, "when": "booking" },
-          { "label": "Monthly payments", "share": 0.75, "when": "monthly" }
-        ]
-      }
+      { "id": "standard", "name": "Standard", "summary": "50% to secure your date, the balance before the day.",
+        "steps": [ { "label": "Booking fee", "share": 0.5, "when": "booking" }, { "label": "Final balance", "share": 0.5, "when": "balance" } ] },
+      { "id": "split", "name": "Split booking fee", "summary": "The booking fee in two instalments of 25%.",
+        "steps": [ { "label": "First instalment", "share": 0.25, "when": "booking" }, { "label": "Second instalment", "share": 0.25, "when": "monthsAfterBooking", "months": 3 }, { "label": "Final balance", "share": 0.5, "when": "balance" } ] },
+      { "id": "monthly", "name": "Monthly", "summary": "25% to secure your date, then equal monthly payments.",
+        "steps": [ { "label": "Booking fee", "share": 0.25, "when": "booking" }, { "label": "Monthly payments", "share": 0.75, "when": "monthly" } ] }
     ]
   }
 }
