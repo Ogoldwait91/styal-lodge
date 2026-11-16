@@ -1,0 +1,718 @@
+---
+/*
+  Wedding calculator — a standalone page for coordinators to use with couples.
+  Every price, option and payment plan comes from src/data/pricing.json.
+  Nothing here needs editing when prices change.
+*/
+import Base from "../layouts/Base.astro";
+import pricing from "../data/pricing.json";
+
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const fmt = (n: number) => "£" + (Number.isInteger(n) ? n.toLocaleString("en-GB") : n.toFixed(2));
+const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touches", "Payment plan"];
+---
+<Base
+  title="Wedding calculator — Styal Lodge"
+  description="Build an estimate for your wedding at Styal Lodge and see the payment plans on offer."
+  showFloatingCta={false}
+>
+  <div class="calc-page">
+    <header class="calc-mast container">
+      <img class="calc-mast__logo" src="/logo-dark.svg" width="971" height="617" alt="Styal Lodge — Wedding Venue, Cheshire" data-hero-wordmark />
+      <p class="eyebrow">Plan your day</p>
+      <h1 class="display">Wedding <em>calculator</em></h1>
+      <p class="calc-mast__lead">Choose your date, guests and menus to see an estimate and how the payments could be spread.</p>
+      {pricing.sample && (
+        <p class="calc-sample" role="note">Sample prices for layout review. These are not Styal Lodge's real prices.</p>
+      )}
+    </header>
+
+    <div class="calc container">
+      <form class="calc-steps" id="calc" novalidate>
+
+        <!-- 1. Date -->
+        <details class="calc-step" name="calc-step" open>
+          <summary>
+            <span class="calc-step__num">1</span>
+            <span class="calc-step__title">{steps[0]}</span>
+            <span class="calc-step__value" data-out="s-date"></span>
+            <span class="calc-step__chev" aria-hidden="true"></span>
+          </summary>
+          <div class="calc-step__body">
+            <fieldset class="calc-field">
+              <legend>Year</legend>
+              <div class="calc-chips">
+                {pricing.years.map((y) => (
+                  <label class="calc-chip"><input type="radio" name="year" value={y.year} /><span>{y.year}</span></label>
+                ))}
+              </div>
+            </fieldset>
+            <div class="calc-field">
+              <label for="f-month">Month</label>
+              <div class="calc-select">
+                <select id="f-month" name="month">
+                  {MONTHS.map((m, i) => (<option value={i + 1}>{m}</option>))}
+                </select>
+              </div>
+            </div>
+            <fieldset class="calc-field">
+              <legend>Day of the week</legend>
+              <div class="calc-chips">
+                {pricing.dayTypes.map((d) => (
+                  <label class="calc-chip"><input type="radio" name="dayType" value={d.id} /><span>{d.short}</span></label>
+                ))}
+              </div>
+            </fieldset>
+            <div class="calc-field calc-field--quiet">
+              <label for="f-date">Already have a date in mind? <span class="calc-opt">Optional</span></label>
+              <div class="calc-date">
+                <input type="date" id="f-date" name="date" />
+                <button type="button" class="calc-link" data-clear-date hidden>Clear date</button>
+              </div>
+              <p class="calc-hint">Choosing a date fills in the year, month and day, and puts real dates on your payment plan.</p>
+            </div>
+            <p class="calc-price-line">Exclusive use of the Lodge <strong data-out="hire-inline"></strong> <span data-out="season-inline"></span></p>
+            <button type="button" class="calc-next" data-next>Next: {steps[1]}</button>
+          </div>
+        </details>
+
+        <!-- 2. Guests -->
+        <details class="calc-step" name="calc-step">
+          <summary>
+            <span class="calc-step__num">2</span>
+            <span class="calc-step__title">{steps[1]}</span>
+            <span class="calc-step__value" data-out="s-guests"></span>
+            <span class="calc-step__chev" aria-hidden="true"></span>
+          </summary>
+          <div class="calc-step__body">
+            {[
+              { id: "adults", label: "Adults for the day", hint: "Ceremony, wedding breakfast and evening" },
+              { id: "children", label: "Children for the day", hint: "Charged at half the menu price" },
+              { id: "evening", label: "Extra evening guests", hint: "Joining for the party" },
+            ].map((g) => (
+              <div class="calc-stepper">
+                <div>
+                  <label for={`f-${g.id}`}>{g.label}</label>
+                  <p class="calc-hint">{g.hint}</p>
+                </div>
+                <div class="calc-stepper__ctrl">
+                  <button type="button" data-step={g.id} data-dir="-1" aria-label={`Fewer: ${g.label}`}>−</button>
+                  <input id={`f-${g.id}`} name={g.id} type="number" inputmode="numeric" min="0" step="1" />
+                  <button type="button" data-step={g.id} data-dir="1" aria-label={`More: ${g.label}`}>+</button>
+                </div>
+              </div>
+            ))}
+            <p class="calc-hint" data-out="guest-note"></p>
+            <button type="button" class="calc-next" data-next>Next: {steps[2]}</button>
+          </div>
+        </details>
+
+        <!-- 3. Feasting -->
+        <details class="calc-step" name="calc-step">
+          <summary>
+            <span class="calc-step__num">3</span>
+            <span class="calc-step__title">{steps[2]}</span>
+            <span class="calc-step__value" data-out="s-food"></span>
+            <span class="calc-step__chev" aria-hidden="true"></span>
+          </summary>
+          <div class="calc-step__body">
+            <fieldset class="calc-field">
+              <legend>Wedding breakfast</legend>
+              <div class="calc-cards">
+                {pricing.menus.map((m) => (
+                  <label class="calc-card">
+                    <input type="radio" name="menu" value={m.id} />
+                    <span class="calc-card__name">{m.name}</span>
+                    <span class="calc-card__blurb">{m.blurb}</span>
+                    <span class="calc-card__price"><span data-price={m.perHead}>{fmt(m.perHead)}</span> per guest</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            <fieldset class="calc-field">
+              <legend>Evening food</legend>
+              <div class="calc-cards calc-cards--slim">
+                {pricing.eveningFood.map((m) => (
+                  <label class="calc-card">
+                    <input type="radio" name="eveFood" value={m.id} />
+                    <span class="calc-card__name">{m.name}</span>
+                    {m.perHead > 0 && <span class="calc-card__price"><span data-price={m.perHead}>{fmt(m.perHead)}</span> per guest</span>}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            <button type="button" class="calc-next" data-next>Next: {steps[3]}</button>
+          </div>
+        </details>
+
+        <!-- 4. Drinks -->
+        <details class="calc-step" name="calc-step">
+          <summary>
+            <span class="calc-step__num">4</span>
+            <span class="calc-step__title">{steps[3]}</span>
+            <span class="calc-step__value" data-out="s-drinks"></span>
+            <span class="calc-step__chev" aria-hidden="true"></span>
+          </summary>
+          <div class="calc-step__body">
+            <fieldset class="calc-field">
+              <legend class="visually-hidden">Drinks package</legend>
+              <div class="calc-cards calc-cards--slim">
+                {pricing.drinks.map((d) => (
+                  <label class="calc-card">
+                    <input type="radio" name="drinks" value={d.id} />
+                    <span class="calc-card__name">{d.name}</span>
+                    <span class="calc-card__blurb">{d.blurb}</span>
+                    <span class="calc-card__price">{d.perHead > 0 ? (<Fragment><span data-price={d.perHead}>{fmt(d.perHead)}</span> per adult</Fragment>) : "No charge"}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            <button type="button" class="calc-next" data-next>Next: {steps[4]}</button>
+          </div>
+        </details>
+
+        <!-- 5. Extras -->
+        <details class="calc-step" name="calc-step">
+          <summary>
+            <span class="calc-step__num">5</span>
+            <span class="calc-step__title">{steps[4]}</span>
+            <span class="calc-step__value" data-out="s-extras"></span>
+            <span class="calc-step__chev" aria-hidden="true"></span>
+          </summary>
+          <div class="calc-step__body">
+            <div class="calc-checks">
+              {pricing.extras.map((x) => (
+                <label class="calc-check">
+                  <input type="checkbox" name="extras" value={x.id} />
+                  <span class="calc-check__box" aria-hidden="true"></span>
+                  <span class="calc-check__text">
+                    <span class="calc-check__name">{x.name}</span>
+                    <span class="calc-check__note">{x.note}</span>
+                  </span>
+                  <span class="calc-check__price"><span data-price={x.price} data-flat={x.per === "flat" ? "" : undefined}>{fmt(x.price)}</span>{x.per === "dayGuest" ? " per guest" : ""}</span>
+                </label>
+              ))}
+            </div>
+            <button type="button" class="calc-next" data-next>Next: {steps[5]}</button>
+          </div>
+        </details>
+
+        <!-- 6. Payment plan -->
+        <details class="calc-step" name="calc-step">
+          <summary>
+            <span class="calc-step__num">6</span>
+            <span class="calc-step__title">{steps[5]}</span>
+            <span class="calc-step__value" data-out="s-plan"></span>
+            <span class="calc-step__chev" aria-hidden="true"></span>
+          </summary>
+          <div class="calc-step__body">
+            <fieldset class="calc-field">
+              <legend class="visually-hidden">Payment plan</legend>
+              <div class="calc-cards calc-cards--slim">
+                {pricing.payment.plans.map((p) => (
+                  <label class="calc-card">
+                    <input type="radio" name="plan" value={p.id} />
+                    <span class="calc-card__name">{p.name}</span>
+                    <span class="calc-card__blurb">{p.summary}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            <a class="calc-next calc-next--link" href="#estimate">See your estimate</a>
+          </div>
+        </details>
+      </form>
+
+      <!-- Estimate -->
+      <aside class="calc-summary" id="estimate" aria-live="polite">
+        <p class="eyebrow">Your estimate</p>
+        <p class="calc-summary__total" data-out="total"></p>
+        <p class="calc-summary__per" data-out="per-guest"></p>
+        <p class="calc-summary__context" data-out="context"></p>
+
+        <dl class="calc-lines" data-out="lines"></dl>
+
+        <div class="calc-plan">
+          <p class="eyebrow">Payment plan · <span data-out="plan-name"></span></p>
+          <ol class="calc-schedule" data-out="schedule"></ol>
+          <p class="calc-hint" data-out="plan-note"></p>
+        </div>
+
+        <div class="calc-actions">
+          <a class="btn btn--solid" href="/book-a-visit">Book a visit</a>
+          <button type="button" class="btn btn--ghost" data-print>Print or save as PDF</button>
+          <button type="button" class="calc-link" data-copy>Copy a link to this estimate</button>
+        </div>
+
+        <p class="calc-smallprint">
+          <span data-out="prepared"></span>
+          An estimate, not a quotation. Prices and dates are subject to availability and confirmed in your contract.
+          {pricing.sample && " Sample prices shown for layout review."}
+        </p>
+      </aside>
+    </div>
+
+    <!-- Phone: running total pinned to the bottom -->
+    <a class="calc-bar" href="#estimate" data-bar>
+      <span class="calc-bar__label">Your estimate</span>
+      <span class="calc-bar__total" data-out="bar-total"></span>
+      <span class="calc-bar__go">View</span>
+    </a>
+  </div>
+
+  <script type="application/json" id="calc-pricing" set:html={JSON.stringify(pricing)} />
+</Base>
+
+<script>
+  const P = JSON.parse(document.getElementById("calc-pricing")!.textContent!);
+  const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const form = document.getElementById("calc") as HTMLFormElement;
+  const $ = (k: string) => document.querySelector<HTMLElement>(`[data-out="${k}"]`)!;
+  const money = (n: number) => "£" + (Number.isInteger(n) ? n.toLocaleString("en-GB") : n.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+  const pounds = (n: number) => "£" + Math.round(n).toLocaleString("en-GB");
+  const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+  const longDate = (d: Date) => d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+  const monthYear = (d: Date) => d.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+  const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+
+  // ---------- state ----------
+  const years: number[] = P.years.map((y: any) => y.year);
+  const firstYear = years.find((y) => y > today.getFullYear()) ?? years[years.length - 1];
+  const state: any = {
+    date: "", year: firstYear, month: 6, dayType: "sat",
+    adults: P.guests.defaultDay, children: P.guests.defaultChildren, evening: P.guests.defaultEvening,
+    menu: P.menus[0].id, eveFood: P.eveningFood[0].id, drinks: P.drinks[1]?.id ?? P.drinks[0].id,
+    extras: [] as string[], plan: P.payment.plans[0].id,
+  };
+
+  // restore from a shared link
+  const q = new URLSearchParams(location.search);
+  const has = (list: any[], id: string | null) => !!id && list.some((x) => String(x.id ?? x.year ?? x) === id);
+  if (has(P.years.map((y: any) => ({ id: y.year })), q.get("y"))) state.year = Number(q.get("y"));
+  if (q.get("m") && +q.get("m")! >= 1 && +q.get("m")! <= 12) state.month = +q.get("m")!;
+  if (has(P.dayTypes, q.get("d"))) state.dayType = q.get("d");
+  for (const [key, param] of [["adults", "a"], ["children", "c"], ["evening", "e"]] as const) {
+    const v = q.get(param); if (v !== null && /^\d{1,3}$/.test(v)) state[key] = +v;
+  }
+  if (has(P.menus, q.get("menu"))) state.menu = q.get("menu");
+  if (has(P.eveningFood, q.get("eve"))) state.eveFood = q.get("eve");
+  if (has(P.drinks, q.get("dr"))) state.drinks = q.get("dr");
+  if (has(P.payment.plans, q.get("plan"))) state.plan = q.get("plan");
+  if (q.get("x")) state.extras = q.get("x")!.split(".").filter((id) => has(P.extras, id));
+  if (q.get("date") && /^\d{4}-\d{2}-\d{2}$/.test(q.get("date")!)) state.date = q.get("date");
+
+  // ---------- helpers ----------
+  const seasonOf = (month: number) => Object.keys(P.seasons).find((k) => P.seasons[k].months.includes(month)) ?? Object.keys(P.seasons)[0];
+  const upliftOf = (year: number) => P.years.find((y: any) => y.year === year)?.uplift ?? 0;
+  const perHead = (base: number) => Math.round(base * (1 + upliftOf(state.year)) * 2) / 2;      // to the nearest 50p
+  const flat = (base: number) => Math.round((base * (1 + upliftOf(state.year))) / 10) * 10;     // to the nearest £10
+  const parseDate = (s: string) => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+  const addMonths = (d: Date, n: number) => { const r = new Date(d); const day = r.getDate(); r.setDate(1); r.setMonth(r.getMonth() + n); r.setDate(Math.min(day, new Date(r.getFullYear(), r.getMonth() + 1, 0).getDate())); return r; };
+
+  function applyDate() {
+    if (!state.date) return;
+    const d = parseDate(state.date);
+    if (isNaN(d.getTime()) || !years.includes(d.getFullYear()) || d < today) { state.date = ""; return; }
+    state.year = d.getFullYear(); state.month = d.getMonth() + 1;
+    state.dayType = P.dayTypes.find((t: any) => t.days.includes(d.getDay()))?.id ?? state.dayType;
+  }
+
+  function clampGuests(changed?: string) {
+    const g = P.guests;
+    state.adults = Math.max(0, Math.round(state.adults || 0));
+    state.children = Math.max(0, Math.round(state.children || 0));
+    state.evening = Math.max(0, Math.round(state.evening || 0));
+    if (state.adults + state.children > g.maxDay) {
+      if (changed === "children") state.children = Math.max(0, g.maxDay - state.adults);
+      else state.adults = Math.max(0, g.maxDay - state.children);
+    }
+    if (state.adults < 2) state.adults = 2;
+    state.evening = Math.min(state.evening, Math.max(0, g.maxEveningTotal - state.adults - state.children));
+  }
+
+  // ---------- calculation ----------
+  function calculate() {
+    const season = seasonOf(state.month);
+    const dayGuests = state.adults + state.children;
+    const eveningTotal = dayGuests + state.evening;
+    const menu = P.menus.find((m: any) => m.id === state.menu);
+    const eve = P.eveningFood.find((m: any) => m.id === state.eveFood);
+    const drinks = P.drinks.find((m: any) => m.id === state.drinks);
+    const dayType = P.dayTypes.find((t: any) => t.id === state.dayType);
+    const lines: { label: string; detail: string; amount: number }[] = [];
+
+    const hire = flat(P.venueHire[season][state.dayType]);
+    lines.push({ label: "Exclusive use of the Lodge", detail: `${dayType.short}, ${P.seasons[season].label.toLowerCase()}`, amount: hire });
+
+    const menuPrice = perHead(menu.perHead);
+    const childPrice = Math.round(menuPrice * P.guests.childRate * 2) / 2;
+    lines.push({ label: `${menu.name} menu`, detail: `${plural(state.adults, "adult", "adults")} at ${money(menuPrice)}`, amount: state.adults * menuPrice });
+    if (state.children > 0) lines.push({ label: "Children's menu", detail: `${plural(state.children, "child", "children")} at ${money(childPrice)}`, amount: state.children * childPrice });
+
+    if (eve.perHead > 0) {
+      const p = perHead(eve.perHead);
+      lines.push({ label: `Evening food: ${eve.name.toLowerCase()}`, detail: `${plural(eveningTotal, "guest", "guests")} at ${money(p)}`, amount: eveningTotal * p });
+    }
+    if (drinks.perHead > 0) {
+      const p = perHead(drinks.perHead);
+      lines.push({ label: `${drinks.name} drinks`, detail: `${plural(state.adults, "adult", "adults")} at ${money(p)}`, amount: state.adults * p });
+    }
+    for (const id of state.extras) {
+      const x = P.extras.find((e: any) => e.id === id); if (!x) continue;
+      if (x.per === "dayGuest") { const p = perHead(x.price); lines.push({ label: x.name, detail: `${plural(dayGuests, "guest", "guests")} at ${money(p)}`, amount: dayGuests * p }); }
+      else lines.push({ label: x.name, detail: "", amount: flat(x.price) });
+    }
+    lines.forEach((l) => (l.amount = Math.round(l.amount)));   // whole pounds, so the lines always add up to the total
+    const total = lines.reduce((s, l) => s + l.amount, 0);
+    return { season, dayType, dayGuests, eveningTotal, menu, eve, drinks, lines, total, hire };
+  }
+
+  function schedule(total: number) {
+    const plan = P.payment.plans.find((p: any) => p.id === state.plan);
+    const weeks = P.payment.balanceWeeksBefore;
+    const exact = state.date ? parseDate(state.date) : null;
+    const approx = exact ?? new Date(state.year, state.month - 1, 15);
+    const balanceDate = new Date(approx); balanceDate.setDate(balanceDate.getDate() - weeks * 7);
+    const balanceWhen = exact ? `By ${longDate(balanceDate)}` : `${weeks} weeks before your wedding`;
+    const rows: { label: string; when: string; amount: string }[] = [];
+    let paid = 0;
+    plan.steps.forEach((s: any, i: number) => {
+      const last = i === plan.steps.length - 1;
+      const amount = last ? Math.round(total) - paid : Math.round(total * s.share);
+      if (!last) paid += amount;
+      if (s.when === "booking") rows.push({ label: s.label, when: "When you book", amount: pounds(amount) });
+      else if (s.when === "balance") rows.push({ label: s.label, when: balanceWhen, amount: pounds(amount) });
+      else if (s.when === "monthsAfterBooking") {
+        const due = addMonths(today, s.months);
+        const late = due >= balanceDate;
+        rows.push({ label: s.label, when: late ? "With your final balance" : `${plural(s.months, "month", "months")} after booking`, amount: pounds(amount) });
+      } else if (s.when === "monthly") {
+        const first = addMonths(today, 1);
+        let n = (balanceDate.getFullYear() - first.getFullYear()) * 12 + (balanceDate.getMonth() - first.getMonth()) + 1;
+        n = Math.max(1, n);
+        const each = amount / n;
+        const end = addMonths(first, n - 1);
+        const span = n === 1 ? monthYear(first) : `${monthYear(first)} to ${monthYear(end)}`;
+        rows.push({
+          label: n === 1 ? "Remaining balance" : `${exact ? "" : "About "}${n} monthly payments`,
+          when: span,
+          amount: n === 1 ? pounds(amount) : `${pounds(each)} a month`,
+        });
+      }
+    });
+    const note = exact
+      ? `Based on booking today for ${longDate(exact)}.`
+      : `Based on booking today for ${MONTHS[state.month - 1]} ${state.year}. Choose a date in step 1 for exact dates.`;
+    return { plan, rows, note };
+  }
+
+  // ---------- render ----------
+  function syncInputs() {
+    (form.elements.namedItem("month") as HTMLSelectElement).value = String(state.month);
+    (form.elements.namedItem("date") as HTMLInputElement).value = state.date;
+    for (const k of ["adults", "children", "evening"]) (form.elements.namedItem(k) as HTMLInputElement).value = String(state[k]);
+    for (const k of ["year", "dayType", "menu", "eveFood", "drinks", "plan"])
+      form.querySelectorAll<HTMLInputElement>(`input[name="${k}"]`).forEach((el) => (el.checked = el.value === String(state[k])));
+    form.querySelectorAll<HTMLInputElement>('input[name="extras"]').forEach((el) => (el.checked = state.extras.includes(el.value)));
+    form.querySelector<HTMLElement>("[data-clear-date]")!.hidden = !state.date;
+  }
+
+  function render() {
+    const r = calculate();
+    const s = schedule(r.total);
+    const g = P.guests;
+
+    // prices on the option cards follow the chosen year
+    document.querySelectorAll<HTMLElement>("[data-price]").forEach((el) => {
+      const base = Number(el.dataset.price);
+      const isFlat = el.hasAttribute("data-flat");
+      el.textContent = money(isFlat ? flat(base) : perHead(base));
+    });
+
+    const when = state.date ? longDate(parseDate(state.date)) : `${r.dayType.short} · ${MONTHS[state.month - 1]} ${state.year}`;
+    $("s-date").textContent = when;
+    $("hire-inline").textContent = pounds(r.hire);
+    $("season-inline").textContent = `(${P.seasons[r.season].label.toLowerCase()})`;
+    $("s-guests").textContent = `${r.dayGuests} day · ${r.eveningTotal} evening`;
+    $("guest-note").textContent = `The Lodge welcomes up to ${g.maxDay} guests for the wedding breakfast and ${g.maxEveningTotal} in the evening.` +
+      (r.dayGuests < g.minDay ? ` Weddings here usually start from ${g.minDay} day guests; smaller celebrations are priced individually.` : "");
+    $("s-food").textContent = r.eve.perHead > 0 ? `${r.menu.name} · ${r.eve.name}` : r.menu.name;
+    $("s-drinks").textContent = r.drinks.name;
+    $("s-extras").textContent = state.extras.length ? plural(state.extras.length, "extra", "extras") : "None chosen";
+    $("s-plan").textContent = s.plan.name;
+
+    $("total").textContent = pounds(r.total);
+    $("bar-total").textContent = pounds(r.total);
+    $("per-guest").textContent = `About ${pounds(r.total / Math.max(1, r.dayGuests))} per day guest`;
+    $("context").textContent = `${when} · ${plural(r.dayGuests, "day guest", "day guests")}` + (state.evening ? `, ${state.evening} more in the evening` : "");
+
+    $("lines").replaceChildren(...r.lines.map((l) => {
+      const row = document.createElement("div"); row.className = "calc-line";
+      const dt = document.createElement("dt"); dt.textContent = l.label;
+      if (l.detail) { const sm = document.createElement("small"); sm.textContent = l.detail; dt.append(sm); }
+      const dd = document.createElement("dd"); dd.textContent = pounds(l.amount);
+      row.append(dt, dd); return row;
+    }));
+
+    $("plan-name").textContent = s.plan.name;
+    $("schedule").replaceChildren(...s.rows.map((p) => {
+      const li = document.createElement("li");
+      const a = document.createElement("span"); a.className = "calc-schedule__what"; a.textContent = p.label;
+      const w = document.createElement("small"); w.textContent = p.when; a.append(w);
+      const b = document.createElement("span"); b.className = "calc-schedule__amt"; b.textContent = p.amount;
+      li.append(a, b); return li;
+    }));
+    $("plan-note").textContent = s.note;
+    $("prepared").textContent = `Prepared ${longDate(today)}. `;
+
+    // keep the address bar shareable
+    const u = new URLSearchParams();
+    u.set("y", state.year); u.set("m", state.month); u.set("d", state.dayType);
+    u.set("a", state.adults); u.set("c", state.children); u.set("e", state.evening);
+    u.set("menu", state.menu); u.set("eve", state.eveFood); u.set("dr", state.drinks); u.set("plan", state.plan);
+    if (state.extras.length) u.set("x", state.extras.join("."));
+    if (state.date) u.set("date", state.date);
+    history.replaceState(null, "", `${location.pathname}?${u}${location.hash}`);
+  }
+
+  // ---------- events ----------
+  const dateInput = form.elements.namedItem("date") as HTMLInputElement;
+  dateInput.min = iso(today > new Date(years[0], 0, 1) ? today : new Date(years[0], 0, 1));
+  dateInput.max = `${years[years.length - 1]}-12-31`;
+
+  form.addEventListener("change", (e) => {
+    const t = e.target as HTMLInputElement;
+    if (t.name === "date") { state.date = t.value; applyDate(); }
+    else if (t.name === "year" || t.name === "dayType") { state[t.name] = t.name === "year" ? Number(t.value) : t.value; state.date = ""; }
+    else if (t.name === "month") { state.month = Number(t.value); state.date = ""; }
+    else if (t.name === "extras") state.extras = [...form.querySelectorAll<HTMLInputElement>('input[name="extras"]:checked')].map((el) => el.value);
+    else if (["adults", "children", "evening"].includes(t.name)) { state[t.name] = Number(t.value); clampGuests(t.name); }
+    else if (t.name) state[t.name] = t.value;
+    syncInputs(); render();
+  });
+  form.addEventListener("submit", (e) => e.preventDefault());
+
+  form.addEventListener("click", (e) => {
+    const el = (e.target as HTMLElement).closest<HTMLElement>("[data-step],[data-next],[data-clear-date]");
+    if (!el) return;
+    if (el.dataset.step) {
+      const k = el.dataset.step; const jump = k === "children" ? 1 : 5;
+      const cur = state[k]; const dir = Number(el.dataset.dir);
+      state[k] = dir > 0 ? Math.floor(cur / jump) * jump + jump : Math.ceil(cur / jump) * jump - jump;
+      clampGuests(k); syncInputs(); render();
+    } else if (el.hasAttribute("data-clear-date")) { state.date = ""; syncInputs(); render(); }
+    else if (el.hasAttribute("data-next")) {
+      const cur = el.closest("details")!; const next = cur.nextElementSibling as HTMLDetailsElement | null;
+      if (next) { cur.open = false; next.open = true; next.querySelector("summary")!.focus({ preventScroll: true }); next.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+    }
+  });
+
+  // one panel open at a time, even where the browser doesn't do it natively
+  const panels = [...form.querySelectorAll<HTMLDetailsElement>("details.calc-step")];
+  panels.forEach((d) => d.addEventListener("toggle", () => { if (d.open) panels.forEach((o) => { if (o !== d) o.open = false; }); }));
+
+  document.querySelector("[data-print]")!.addEventListener("click", () => window.print());
+  const copyBtn = document.querySelector<HTMLButtonElement>("[data-copy]")!;
+  copyBtn.addEventListener("click", async () => {
+    const original = "Copy a link to this estimate";
+    try { await navigator.clipboard.writeText(location.href.split("#")[0]); copyBtn.textContent = "Link copied"; }
+    catch { copyBtn.textContent = "Copy the address from your browser bar"; }
+    setTimeout(() => (copyBtn.textContent = original), 2400);
+  });
+
+  // phone: hide the pinned total while the estimate itself is on screen
+  const bar = document.querySelector<HTMLElement>("[data-bar]")!;
+  const estimate = document.getElementById("estimate")!;
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver(([en]) => bar.classList.toggle("is-hidden", en.isIntersecting), { threshold: 0.05 }).observe(estimate);
+  }
+
+  applyDate(); clampGuests(); syncInputs(); render();
+</script>
+
+<style is:global>
+  /* ============ Wedding calculator ============ */
+  .calc-page { padding-bottom: calc(var(--stack-gap) * 1.75); }
+  .calc-page :is(label, legend, small, button, input, select, dt, dd, li, .calc-hint, .calc-card__blurb, .calc-card__price, .calc-step__value) { letter-spacing: 0.01em; }
+
+  /* ---- masthead ---- */
+  .calc-mast { display: grid; justify-items: center; text-align: center; padding-bottom: calc(var(--stack-gap) * .65); }
+  .calc-mast__logo { height: clamp(60px, 7vw, 108px); width: auto; margin-bottom: clamp(1.25rem, 2.5vw, 2rem); }
+  .calc-mast .display { font-size: var(--text-xl); }
+  .calc-mast .eyebrow { margin-bottom: var(--space-sm); }
+  .calc-mast__lead { margin-top: var(--space-xs); max-width: 52ch; color: var(--stone); font-size: var(--text-sm); letter-spacing: 0.01em; }
+  .calc-sample {
+    margin-top: var(--space-md); padding: .5em 1.1em; border: 1px dashed var(--taupe); border-radius: 999px;
+    font-size: var(--text-xs); letter-spacing: 0.04em; color: var(--stone);
+  }
+
+  /* ---- layout ---- */
+  .calc { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: clamp(1.5rem, 4vw, 4rem); align-items: start; }
+  .calc-summary { position: sticky; top: calc(var(--header-h) + 1.25rem); max-height: calc(100vh - var(--header-h) - 2.5rem); overflow-y: auto; overscroll-behavior: contain; }
+
+  /* ---- steps (accordion) ---- */
+  .calc-steps { border-top: 1px solid var(--hairline); }
+  .calc-step { border-bottom: 1px solid var(--hairline); }
+  .calc-step > summary {
+    list-style: none; cursor: pointer; display: grid; grid-template-columns: auto 1fr auto auto; align-items: baseline;
+    gap: .9rem; padding: 1.15rem .25rem; transition: color .25s ease;
+  }
+  .calc-step > summary::-webkit-details-marker { display: none; }
+  .calc-step > summary:hover { color: var(--accent); }
+  .calc-step__num { font-size: var(--text-xs); letter-spacing: var(--tracking-wide); color: var(--taupe); min-width: 1.2em; }
+  .calc-step__title { font-size: var(--text-lg); letter-spacing: -0.01em; line-height: 1.2; }
+  .calc-step__value { font-size: var(--text-sm); color: var(--stone); text-align: right; }
+  .calc-step[open] .calc-step__value { visibility: hidden; }
+  .calc-step__chev { width: .55rem; height: .55rem; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: translateY(-.2rem) rotate(45deg); transition: transform .3s ease; align-self: center; }
+  .calc-step[open] .calc-step__chev { transform: translateY(.1rem) rotate(-135deg); }
+  .calc-step__body { padding: .25rem .25rem 1.75rem; display: grid; gap: 1.4rem; }
+  @media (prefers-reduced-motion: no-preference) {
+    .calc-step[open] .calc-step__body { animation: calc-open .35s ease both; }
+    @keyframes calc-open { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  }
+
+  /* ---- fields ---- */
+  .calc-field { border: 0; padding: 0; min-width: 0; display: grid; gap: .6rem; }
+  .calc-field > legend, .calc-field > label, .calc-stepper label { padding: 0; font-size: var(--text-sm); color: var(--ink); }
+  .calc-field > legend { margin-bottom: .6rem; }
+  .calc-opt { color: var(--taupe); font-size: var(--text-xs); margin-left: .35em; }
+  .calc-hint { font-size: var(--text-xs); color: var(--stone); line-height: 1.5; }
+  .calc-field--quiet { padding-top: 1.2rem; border-top: 1px dashed var(--hairline); }
+
+  .calc-chips { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .calc-chip { position: relative; cursor: pointer; }
+  .calc-chip input, .calc-card input, .calc-check input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+  .calc-chip span {
+    display: inline-flex; align-items: center; min-height: 44px; padding: 0 1.15em; border: 1px solid var(--hairline); border-radius: 999px;
+    font-size: var(--text-sm); background: transparent; transition: background-color .25s ease, border-color .25s ease, color .25s ease;
+  }
+  .calc-chip:hover span { border-color: var(--accent); }
+  .calc-chip input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .calc-chip input:focus-visible + span, .calc-card:has(input:focus-visible), .calc-check:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  .calc-select { position: relative; max-width: 18rem; }
+  .calc-select::after { content: ""; position: absolute; right: 1rem; top: 50%; width: .45rem; height: .45rem; border-right: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink); transform: translateY(-70%) rotate(45deg); pointer-events: none; }
+  .calc-select select, .calc-date input {
+    appearance: none; -webkit-appearance: none; width: 100%; min-height: 46px; padding: 0 2.5rem 0 1rem;
+    font: inherit; font-size: var(--text-sm); color: var(--ink); background: transparent;
+    border: 1px solid var(--hairline); border-radius: var(--radius); cursor: pointer;
+  }
+  .calc-date { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; }
+  .calc-date input { width: auto; padding-right: 1rem; }
+  .calc-select select:hover, .calc-date input:hover { border-color: var(--accent); }
+  .calc-link { background: none; border: 0; padding: 0; font: inherit; font-size: var(--text-xs); color: var(--stone); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+  .calc-link:hover { color: var(--accent); }
+  .calc-price-line { font-size: var(--text-sm); color: var(--stone); }
+  .calc-price-line strong { font-weight: var(--fw-regular); color: var(--ink); font-size: var(--text-base); margin-left: .35em; }
+
+  /* guest steppers */
+  .calc-stepper { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .calc-stepper__ctrl { display: inline-flex; align-items: center; border: 1px solid var(--hairline); border-radius: 999px; flex: none; }
+  .calc-stepper__ctrl button { width: 46px; height: 46px; border: 0; background: none; font: inherit; font-size: 1.25rem; line-height: 1; color: var(--ink); cursor: pointer; border-radius: 999px; transition: background-color .2s ease, color .2s ease; }
+  .calc-stepper__ctrl button:hover { background: var(--accent); color: var(--on-accent); }
+  .calc-stepper__ctrl input { width: 3.4rem; border: 0; background: none; text-align: center; font: inherit; font-size: var(--text-base); color: var(--ink); -moz-appearance: textfield; appearance: textfield; }
+  .calc-stepper__ctrl input::-webkit-outer-spin-button, .calc-stepper__ctrl input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+  /* option cards */
+  .calc-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+  .calc-cards--slim { grid-template-columns: 1fr; }
+  .calc-card {
+    position: relative; display: grid; gap: .2rem; padding: 1rem 1.15rem; cursor: pointer;
+    border: 1px solid var(--hairline); border-radius: var(--radius); transition: border-color .25s ease, background-color .25s ease;
+  }
+  .calc-cards--slim .calc-card { grid-template-columns: 1fr auto; column-gap: 1rem; align-items: baseline; }
+  .calc-cards--slim .calc-card__blurb { grid-column: 1; }
+  .calc-cards--slim .calc-card__price { grid-column: 2; grid-row: 1; margin: 0; }
+  .calc-card:hover { border-color: var(--accent); }
+  .calc-card:has(input:checked) { border-color: var(--accent); background: var(--surface); box-shadow: inset 0 0 0 1px var(--accent); }
+  .calc-card__name { font-size: var(--text-base); line-height: 1.3; }
+  .calc-card__blurb { font-size: var(--text-xs); color: var(--stone); line-height: 1.5; }
+  .calc-card__price { font-size: var(--text-sm); margin-top: .5rem; white-space: nowrap; }
+
+  /* extras */
+  .calc-checks { display: grid; }
+  .calc-check { position: relative; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 1rem; padding: .9rem 0; cursor: pointer; border-bottom: 1px solid var(--hairline); }
+  .calc-check:last-child { border-bottom: 0; }
+  .calc-check__box { width: 22px; height: 22px; border: 1px solid var(--stone); border-radius: 4px; display: grid; place-items: center; transition: background-color .2s ease, border-color .2s ease; }
+  .calc-check__box::after { content: ""; width: 10px; height: 5px; border-left: 1.5px solid var(--on-accent); border-bottom: 1.5px solid var(--on-accent); transform: translateY(-1px) rotate(-45deg); opacity: 0; }
+  .calc-check input:checked ~ .calc-check__box { background: var(--accent); border-color: var(--accent); }
+  .calc-check input:checked ~ .calc-check__box::after { opacity: 1; }
+  .calc-check__text { display: grid; }
+  .calc-check__name { font-size: var(--text-base); line-height: 1.3; }
+  .calc-check__note { font-size: var(--text-xs); color: var(--stone); }
+  .calc-check__price { font-size: var(--text-sm); white-space: nowrap; }
+
+  .calc-next {
+    justify-self: start; display: inline-flex; align-items: center; min-height: 46px; padding: 0 1.6em; cursor: pointer;
+    font: inherit; font-size: var(--text-sm); color: var(--ink); text-decoration: none;
+    background: transparent; border: 1px solid var(--ink); border-radius: 999px; transition: background-color .25s ease, color .25s ease;
+  }
+  .calc-next:hover { background: var(--ink); color: var(--bg); }
+  .calc-next--link { display: none; }
+
+  /* ---- estimate ---- */
+  .calc-summary { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius); padding: clamp(1.5rem, 3vw, 2.25rem); display: grid; gap: .35rem; scroll-margin-top: calc(var(--header-h) + 1rem); }
+  .calc-summary__total { font-size: var(--text-display); line-height: 1; letter-spacing: -0.03em; color: var(--ink-strong); margin-top: .5rem; font-variant-numeric: lining-nums; }
+  .calc-summary__per { font-size: var(--text-sm); color: var(--stone); }
+  .calc-summary__context { font-size: var(--text-sm); color: var(--ink); margin-top: .35rem; }
+  .calc-lines { margin-top: 1.25rem; border-top: 1px solid var(--hairline); }
+  .calc-line { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: .7rem 0; border-bottom: 1px solid var(--hairline); }
+  .calc-line dt { font-size: var(--text-sm); line-height: 1.35; }
+  .calc-line dt small, .calc-schedule small { display: block; font-size: var(--text-xs); color: var(--stone); }
+  .calc-line dd { font-size: var(--text-sm); white-space: nowrap; font-variant-numeric: tabular-nums lining-nums; }
+  .calc-plan { margin-top: 1.5rem; display: grid; gap: .6rem; }
+  .calc-schedule { list-style: none; padding: 0; margin: 0; counter-reset: pay; }
+  .calc-schedule li { counter-increment: pay; display: grid; grid-template-columns: auto 1fr auto; align-items: baseline; gap: .85rem; padding: .7rem 0; border-bottom: 1px solid var(--hairline); }
+  .calc-schedule li::before { content: counter(pay); width: 1.6rem; height: 1.6rem; display: grid; place-items: center; border: 1px solid var(--taupe); border-radius: 50%; font-size: var(--text-xs); color: var(--stone); align-self: center; }
+  .calc-schedule__what { font-size: var(--text-sm); line-height: 1.35; }
+  .calc-schedule__amt { font-size: var(--text-base); white-space: nowrap; font-variant-numeric: tabular-nums lining-nums; }
+  .calc-actions { margin-top: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+  .calc-actions .btn { letter-spacing: 0.01em; padding-inline: 1em; border-radius: 999px; }
+  .calc-actions .calc-link { grid-column: 1 / -1; justify-self: center; margin-top: .35rem; }
+  .calc-smallprint { margin-top: 1.1rem; font-size: var(--text-xs); color: var(--stone); line-height: 1.55; }
+
+  /* ---- phone total bar ---- */
+  .calc-bar { display: none; }
+
+  /* ---- tablet and phone ---- */
+  @media (max-width: 64em) {
+    .calc { grid-template-columns: 1fr; }
+    .calc-summary { position: static; max-height: none; overflow: visible; }
+    .calc-next--link { display: inline-flex; }
+    .calc-bar {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: grid; grid-template-columns: 1fr auto auto; align-items: baseline; gap: 1rem;
+      padding: .9rem var(--gutter) calc(.9rem + env(safe-area-inset-bottom)); background: var(--surface-dark); color: var(--on-dark); text-decoration: none;
+      transition: transform .3s ease;
+    }
+    .calc-bar.is-hidden { transform: translateY(110%); }
+    .calc-bar__label { font-size: var(--text-xs); letter-spacing: var(--tracking-wide); text-transform: uppercase; color: var(--on-dark-muted); }
+    .calc-bar__total { font-size: var(--text-lg); font-variant-numeric: lining-nums; }
+    .calc-bar__go { font-size: var(--text-xs); letter-spacing: 0.04em; border: 1px solid rgba(244, 241, 234, .4); border-radius: 999px; padding: .35em 1em; }
+    .calc-page { padding-bottom: calc(var(--stack-gap) + 4.5rem); }
+  }
+  @media (max-width: 40em) {
+    .calc-cards { grid-template-columns: 1fr; }
+    .calc-step > summary { grid-template-columns: auto 1fr auto; }
+    .calc-step__value { grid-column: 2 / 3; grid-row: 2; text-align: left; }
+    .calc-step[open] .calc-step__value { display: none; }
+    .calc-step__chev { grid-row: 1; grid-column: 3; }
+    .calc-actions { grid-template-columns: 1fr; }
+    .calc-stepper__ctrl input { width: 2.8rem; }
+  }
+
+  /* ---- print: a clean one-page estimate ---- */
+  @media print {
+    @page { margin: 16mm; }
+    .site-header, .site-footer, .skip-link, .calc-steps, .calc-bar, .calc-actions, .calc-sample, .calc-mast__lead, .calc-mast .eyebrow { display: none !important; }
+    body { background: #fff; }
+    .calc-page { padding: 0; }
+    .calc-mast { padding-bottom: 8mm; }
+    .calc-mast__logo { height: 26mm; margin-bottom: 6mm; }
+    .calc-mast .display { font-size: 20pt; }
+    .calc { display: block; }
+    .calc-summary { position: static; border: 0; background: none; padding: 0; max-height: none; overflow: visible; }
+    .calc-summary__total { font-size: 34pt; }
+    .calc-line, .calc-schedule li { break-inside: avoid; }
+  }
+</style>
