@@ -1,67 +1,269 @@
 {
-  "_readme": "All calculator prices live here. Venue hire and the winter collection come from the Styal Lodge 2027-2029 price list (all inclusive of VAT). Anything listed in 'sampleSections' is still a placeholder and shows a 'Sample prices' tag on the page; remove a name from that list once its real prices are in.",
-  "sampleSections": ["feasting", "drinks", "extras", "paymentTiming"],
-  "years": [2027, 2028, 2029],
+  "_readme": "All calculator prices live here. Venue hire and the winter collection come from the Styal Lodge 2027-2029 price list (all inclusive of VAT). Sections named in 'pendingSections' have no confirmed prices yet: the page shows them as 'priced separately' and leaves them out of the total. The numbers under menus, eveningFood, drinks and extras are PLACEHOLDERS and are not shown. When real prices are in, correct the numbers and remove the section's name from 'pendingSections'.",
+  "pendingSections": [
+    "feasting",
+    "drinks",
+    "extras"
+  ],
+  "years": [
+    2027,
+    2028,
+    2029
+  ],
   "dayTypes": [
-    { "id": "monWed", "label": "Monday to Wednesday", "short": "Mon–Wed", "days": [1, 2, 3] },
-    { "id": "thu", "label": "Thursday", "short": "Thursday", "days": [4] },
-    { "id": "fri", "label": "Friday", "short": "Friday", "days": [5] },
-    { "id": "sat", "label": "Saturday", "short": "Saturday", "days": [6] },
-    { "id": "sun", "label": "Sunday", "short": "Sunday", "days": [0] }
+    {
+      "id": "monWed",
+      "label": "Monday to Wednesday",
+      "short": "Mon–Wed",
+      "days": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "thu",
+      "label": "Thursday",
+      "short": "Thursday",
+      "days": [
+        4
+      ]
+    },
+    {
+      "id": "fri",
+      "label": "Friday",
+      "short": "Friday",
+      "days": [
+        5
+      ]
+    },
+    {
+      "id": "sat",
+      "label": "Saturday",
+      "short": "Saturday",
+      "days": [
+        6
+      ]
+    },
+    {
+      "id": "sun",
+      "label": "Sunday",
+      "short": "Sunday",
+      "days": [
+        0
+      ]
+    }
   ],
   "summer": {
     "label": "Summer in Styal",
-    "months": [4, 5, 6, 7, 8, 9],
+    "months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
     "holidayRate": "sat",
     "hire": {
-      "2027": { "monWed": 4750, "thu": 5250, "fri": 5500, "sat": 5750, "sun": 5500 },
-      "2028": { "monWed": 5500, "thu": 5750, "fri": 6000, "sat": 6250, "sun": 6000 },
-      "2029": { "monWed": 5500, "thu": 5750, "fri": 6000, "sat": 6250, "sun": 6000 }
+      "2027": {
+        "monWed": 4750,
+        "thu": 5250,
+        "fri": 5500,
+        "sat": 5750,
+        "sun": 5500
+      },
+      "2028": {
+        "monWed": 5500,
+        "thu": 5750,
+        "fri": 6000,
+        "sat": 6250,
+        "sun": 6000
+      },
+      "2029": {
+        "monWed": 5500,
+        "thu": 5750,
+        "fri": 6000,
+        "sat": 6250,
+        "sun": 6000
+      }
     }
   },
   "winter": {
     "label": "Winter in Styal",
-    "months": [10, 11, 12, 1, 2, 3],
+    "months": [
+      10,
+      11,
+      12,
+      1,
+      2,
+      3
+    ],
     "includedGuests": 50,
-    "peakDays": ["fri", "sat", "sun"],
+    "peakDays": [
+      "fri",
+      "sat",
+      "sun"
+    ],
     "includes": "Food, drinks, essential wedding styling and dedicated coordination are included, alongside exclusive use of the Lodge.",
     "collection": {
-      "2027": { "offPeak": 6750, "peak": 8000, "extraDayGuest": 75, "eveningGuest": 15 },
-      "2028": { "offPeak": 7750, "peak": 9000, "extraDayGuest": 90, "eveningGuest": 15 }
+      "2027": {
+        "offPeak": 6750,
+        "peak": 8000,
+        "extraDayGuest": 75,
+        "eveningGuest": 15
+      },
+      "2028": {
+        "offPeak": 7750,
+        "peak": 9000,
+        "extraDayGuest": 90,
+        "eveningGuest": 15
+      }
     }
   },
-  "guests": { "maxDay": 160, "maxEveningTotal": 180, "defaultDay": 80, "defaultEvening": 30 },
+  "guests": {
+    "maxDay": 160,
+    "maxEveningTotal": 180,
+    "defaultDay": 80,
+    "defaultEvening": 30
+  },
   "menus": [
-    { "id": "seasonal", "name": "Seasonal", "blurb": "Three courses that follow the season.", "perHead": 85 },
-    { "id": "fire", "name": "Fire", "blurb": "Cooked over flame and served to the table.", "perHead": 95 },
-    { "id": "sharing", "name": "Sharing", "blurb": "Generous boards passed between guests.", "perHead": 90 },
-    { "id": "woodfire", "name": "Woodfire Pizza", "blurb": "Relaxed, hand-stretched and wood-fired.", "perHead": 65 }
+    {
+      "id": "seasonal",
+      "name": "Seasonal",
+      "blurb": "Three courses that follow the season.",
+      "perHead": 85
+    },
+    {
+      "id": "fire",
+      "name": "Fire",
+      "blurb": "Cooked over flame and served to the table.",
+      "perHead": 95
+    },
+    {
+      "id": "sharing",
+      "name": "Sharing",
+      "blurb": "Generous boards passed between guests.",
+      "perHead": 90
+    },
+    {
+      "id": "woodfire",
+      "name": "Woodfire Pizza",
+      "blurb": "Relaxed, hand-stretched and wood-fired.",
+      "perHead": 65
+    }
   ],
   "eveningFood": [
-    { "id": "none", "name": "No evening food", "perHead": 0 },
-    { "id": "pizza", "name": "Evening pizza", "perHead": 14 },
-    { "id": "rolls", "name": "Smoked brisket rolls", "perHead": 12 }
+    {
+      "id": "none",
+      "name": "No evening food",
+      "perHead": 0
+    },
+    {
+      "id": "pizza",
+      "name": "Evening pizza",
+      "perHead": 14
+    },
+    {
+      "id": "rolls",
+      "name": "Smoked brisket rolls",
+      "perHead": 12
+    }
   ],
   "drinks": [
-    { "id": "bar", "name": "Bar only", "blurb": "Guests buy their own drinks at the licensed bar.", "perHead": 0 },
-    { "id": "classic", "name": "Classic", "blurb": "Reception drink, wine with the meal and a toast.", "perHead": 32 },
-    { "id": "signature", "name": "Signature", "blurb": "Champagne reception, premium wines and a toast.", "perHead": 46 }
+    {
+      "id": "bar",
+      "name": "Bar only",
+      "blurb": "Guests buy their own drinks at the licensed bar.",
+      "perHead": 0
+    },
+    {
+      "id": "classic",
+      "name": "Classic",
+      "blurb": "Reception drink, wine with the meal and a toast.",
+      "perHead": 32
+    },
+    {
+      "id": "signature",
+      "name": "Signature",
+      "blurb": "Champagne reception, premium wines and a toast.",
+      "perHead": 46
+    }
   ],
   "extras": [
-    { "id": "canapes", "name": "Canapés", "note": "Served during garden drinks", "price": 9.5, "per": "dayGuest" },
-    { "id": "styling", "name": "Venue styling", "note": "Florals, candles and table styling", "price": 950, "per": "flat", "summerOnly": true },
-    { "id": "grazing", "name": "Cheese and grazing table", "note": "For the evening", "price": 480, "per": "flat" },
-    { "id": "dessert", "name": "Live-fire dessert station", "note": "Toasted over the coals", "price": 7, "per": "dayGuest" }
+    {
+      "id": "canapes",
+      "name": "Canapés",
+      "note": "Served during garden drinks",
+      "price": 9.5,
+      "per": "dayGuest"
+    },
+    {
+      "id": "styling",
+      "name": "Venue styling",
+      "note": "Florals, candles and table styling",
+      "price": 950,
+      "per": "flat",
+      "summerOnly": true
+    },
+    {
+      "id": "grazing",
+      "name": "Cheese and grazing table",
+      "note": "For the evening",
+      "price": 480,
+      "per": "flat"
+    },
+    {
+      "id": "dessert",
+      "name": "Live-fire dessert station",
+      "note": "Toasted over the coals",
+      "price": 7,
+      "per": "dayGuest"
+    }
   ],
   "payment": {
-    "balanceWeeksBefore": 8,
+    "balanceWeeksBefore": null,
+    "note": "Your coordinator will confirm payment dates when you book.",
     "plans": [
-      { "id": "standard", "name": "Standard", "summary": "50% to secure your date, the balance before the day.",
-        "steps": [ { "label": "Booking fee", "share": 0.5, "when": "booking" }, { "label": "Final balance", "share": 0.5, "when": "balance" } ] },
-      { "id": "split", "name": "Split booking fee", "summary": "The booking fee in two instalments of 25%.",
-        "steps": [ { "label": "First instalment", "share": 0.25, "when": "booking" }, { "label": "Second instalment", "share": 0.25, "when": "monthsAfterBooking", "months": 3 }, { "label": "Final balance", "share": 0.5, "when": "balance" } ] },
-      { "id": "monthly", "name": "Monthly", "summary": "25% to secure your date, then equal monthly payments.",
-        "steps": [ { "label": "Booking fee", "share": 0.25, "when": "booking" }, { "label": "Monthly payments", "share": 0.75, "when": "monthly" } ] }
+      {
+        "id": "standard",
+        "name": "Booking fee in full",
+        "summary": "A 50% booking fee secures your date.",
+        "steps": [
+          {
+            "label": "Booking fee (50%)",
+            "share": 0.5,
+            "when": "booking"
+          },
+          {
+            "label": "Remaining balance",
+            "share": 0.5,
+            "when": "balance"
+          }
+        ]
+      },
+      {
+        "id": "split",
+        "name": "Booking fee in two instalments",
+        "summary": "The 50% booking fee split into two instalments of 25%.",
+        "steps": [
+          {
+            "label": "First instalment (25%)",
+            "share": 0.25,
+            "when": "booking"
+          },
+          {
+            "label": "Second instalment (25%)",
+            "share": 0.25,
+            "when": "agreed"
+          },
+          {
+            "label": "Remaining balance",
+            "share": 0.5,
+            "when": "balance"
+          }
+        ]
+      }
     ]
   }
 }

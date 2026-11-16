@@ -10,12 +10,12 @@ import pricing from "../data/pricing.json";
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const fmt = (n: number) => "£" + (Number.isInteger(n) ? n.toLocaleString("en-GB") : n.toFixed(2));
 const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touches", "Payment plan"];
-const isSample = (k: string) => pricing.sampleSections.includes(k);
-const anySample = pricing.sampleSections.length > 0;
+const pending = (k: string) => pricing.pendingSections.includes(k);
+const SEPARATE = "Priced separately. Your coordinator will take you through the options and prices.";
 ---
 <Base
   title="Wedding calculator — Styal Lodge"
-  description="Build an estimate for your wedding at Styal Lodge and see the payment plans on offer."
+  description="See venue prices for your date at Styal Lodge and how the payments are spread."
   showFloatingCta={false}
 >
   <div class="calc-page">
@@ -23,10 +23,7 @@ const anySample = pricing.sampleSections.length > 0;
       <img class="calc-mast__logo" src="/logo-dark.svg" width="971" height="617" alt="Styal Lodge — Wedding Venue, Cheshire" data-hero-wordmark />
       <p class="eyebrow">Plan your day</p>
       <h1 class="display">Wedding <em>calculator</em></h1>
-      <p class="calc-mast__lead">Choose your date, guests and menus to see an estimate and how the payments could be spread.</p>
-      {anySample && (
-        <p class="calc-sample" role="note">Venue hire and winter prices are from the 2027 to 2029 price list. Anything tagged "Sample" is a placeholder.</p>
-      )}
+      <p class="calc-mast__lead">Choose your date and guests to see the price for your day and how the payments are spread.</p>
     </header>
 
     <div class="calc container">
@@ -35,7 +32,7 @@ const anySample = pricing.sampleSections.length > 0;
         <!-- 1. Date -->
         <details class="calc-step" name="calc-step" open>
           <summary>
-            <span class="calc-step__num">1</span>
+            <span class="calc-step__num" aria-hidden="true"></span>
             <span class="calc-step__title">{steps[0]}</span>
             <span class="calc-step__value" data-out="s-date"></span>
             <span class="calc-step__chev" aria-hidden="true"></span>
@@ -76,7 +73,8 @@ const anySample = pricing.sampleSections.length > 0;
             <div class="calc-field calc-field--quiet">
               <label for="f-date">Already have a date in mind? <span class="calc-opt">Optional</span></label>
               <div class="calc-date">
-                <input type="date" id="f-date" name="date" />
+                <button type="button" class="calc-next calc-next--small" data-pick-date>Choose a date</button>
+                <input type="date" id="f-date" name="date" hidden />
                 <button type="button" class="calc-link" data-clear-date hidden>Clear date</button>
               </div>
               <p class="calc-hint">Choosing a date fills in the year, month and day, and puts real dates on your payment plan.</p>
@@ -89,7 +87,7 @@ const anySample = pricing.sampleSections.length > 0;
         <!-- 2. Guests -->
         <details class="calc-step" name="calc-step">
           <summary>
-            <span class="calc-step__num">2</span>
+            <span class="calc-step__num" aria-hidden="true"></span>
             <span class="calc-step__title">{steps[1]}</span>
             <span class="calc-step__value" data-out="s-guests"></span>
             <span class="calc-step__chev" aria-hidden="true"></span>
@@ -119,15 +117,15 @@ const anySample = pricing.sampleSections.length > 0;
         <!-- 3. Feasting -->
         <details class="calc-step" name="calc-step">
           <summary>
-            <span class="calc-step__num">3</span>
+            <span class="calc-step__num" aria-hidden="true"></span>
             <span class="calc-step__title">{steps[2]}</span>
             <span class="calc-step__value" data-out="s-food"></span>
             <span class="calc-step__chev" aria-hidden="true"></span>
           </summary>
           <div class="calc-step__body">
             <p class="calc-included" data-mode="winter">Included in your winter collection. {pricing.winter.includes}</p>
-            {isSample("feasting") && <p class="calc-tag" data-mode="summer">Sample prices</p>}
-            <fieldset class="calc-field" data-mode="summer">
+            {pending("feasting") && <p class="calc-included" data-mode="summer">{SEPARATE}</p>}
+            <fieldset class="calc-field" data-mode="summer" hidden={pending("feasting")} data-pending={pending("feasting") ? "" : undefined}>
               <legend>Wedding breakfast</legend>
               <div class="calc-cards">
                 {pricing.menus.map((m) => (
@@ -140,7 +138,7 @@ const anySample = pricing.sampleSections.length > 0;
                 ))}
               </div>
             </fieldset>
-            <fieldset class="calc-field" data-mode="summer">
+            <fieldset class="calc-field" data-mode="summer" hidden={pending("feasting")} data-pending={pending("feasting") ? "" : undefined}>
               <legend>Evening food</legend>
               <div class="calc-cards calc-cards--slim">
                 {pricing.eveningFood.map((m) => (
@@ -159,15 +157,15 @@ const anySample = pricing.sampleSections.length > 0;
         <!-- 4. Drinks -->
         <details class="calc-step" name="calc-step">
           <summary>
-            <span class="calc-step__num">4</span>
+            <span class="calc-step__num" aria-hidden="true"></span>
             <span class="calc-step__title">{steps[3]}</span>
             <span class="calc-step__value" data-out="s-drinks"></span>
             <span class="calc-step__chev" aria-hidden="true"></span>
           </summary>
           <div class="calc-step__body">
             <p class="calc-included" data-mode="winter">Drinks are included in your winter collection.</p>
-            {isSample("drinks") && <p class="calc-tag" data-mode="summer">Sample prices</p>}
-            <fieldset class="calc-field" data-mode="summer">
+            {pending("drinks") && <p class="calc-included" data-mode="summer">{SEPARATE}</p>}
+            <fieldset class="calc-field" data-mode="summer" hidden={pending("drinks")} data-pending={pending("drinks") ? "" : undefined}>
               <legend class="visually-hidden">Drinks package</legend>
               <div class="calc-cards calc-cards--slim">
                 {pricing.drinks.map((d) => (
@@ -180,20 +178,19 @@ const anySample = pricing.sampleSections.length > 0;
                 ))}
               </div>
             </fieldset>
-            <button type="button" class="calc-next" data-next>Next: {steps[4]}</button>
+            <button type="button" class="calc-next" data-next>Next: {pending("extras") ? steps[5] : steps[4]}</button>
           </div>
         </details>
 
         <!-- 5. Extras -->
-        <details class="calc-step" name="calc-step">
+        <details class="calc-step" name="calc-step" hidden={pending("extras")} data-pending={pending("extras") ? "" : undefined}>
           <summary>
-            <span class="calc-step__num">5</span>
+            <span class="calc-step__num" aria-hidden="true"></span>
             <span class="calc-step__title">{steps[4]}</span>
             <span class="calc-step__value" data-out="s-extras"></span>
             <span class="calc-step__chev" aria-hidden="true"></span>
           </summary>
           <div class="calc-step__body">
-            {isSample("extras") && <p class="calc-tag">Sample prices</p>}
             <div class="calc-checks">
               {pricing.extras.map((x) => (
                 <label class="calc-check" data-mode={x.summerOnly ? "summer" : undefined}>
@@ -214,13 +211,12 @@ const anySample = pricing.sampleSections.length > 0;
         <!-- 6. Payment plan -->
         <details class="calc-step" name="calc-step">
           <summary>
-            <span class="calc-step__num">6</span>
+            <span class="calc-step__num" aria-hidden="true"></span>
             <span class="calc-step__title">{steps[5]}</span>
             <span class="calc-step__value" data-out="s-plan"></span>
             <span class="calc-step__chev" aria-hidden="true"></span>
           </summary>
           <div class="calc-step__body">
-            {isSample("paymentTiming") && <p class="calc-tag">Sample plans and timings</p>}
             <fieldset class="calc-field">
               <legend class="visually-hidden">Payment plan</legend>
               <div class="calc-cards calc-cards--slim">
@@ -243,6 +239,7 @@ const anySample = pricing.sampleSections.length > 0;
         <p class="eyebrow">Your estimate</p>
         <p class="calc-summary__total" data-out="total"></p>
         <p class="calc-summary__per" data-out="per-guest"></p>
+        <p class="calc-summary__scope" data-out="scope"></p>
         <p class="calc-summary__context" data-out="context"></p>
 
         <dl class="calc-lines" data-out="lines"></dl>
@@ -262,7 +259,7 @@ const anySample = pricing.sampleSections.length > 0;
         <p class="calc-smallprint">
           <span data-out="prepared"></span>
           An estimate, not a quotation. All rates include VAT and are subject to change; prices and dates are confirmed in your contract.
-          {anySample && " Items tagged Sample are placeholders."}
+
         </p>
       </aside>
     </div>
@@ -290,6 +287,7 @@ const anySample = pricing.sampleSections.length > 0;
   const monthYear = (d: Date) => d.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
   const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   const today = new Date(); today.setHours(0, 0, 0, 0);
+  const PENDING = new Set<string>(P.pendingSections);
 
   // ---------- state ----------
   const years: number[] = P.years;
@@ -368,12 +366,12 @@ const anySample = pricing.sampleSections.length > 0;
       else {
         base = table[state.holiday ? P.summer.holidayRate : state.dayType];
         lines.push({ label: baseLabel, detail: `${when}, ${P.summer.label.toLowerCase().replace("styal", "Styal")} ${state.year}`, amount: base });
-        lines.push({ label: `${menu.name} menu`, detail: `${plural(state.day, "guest", "guests")} at ${money(menu.perHead)}`, amount: state.day * menu.perHead });
-        if (eve.perHead > 0) lines.push({ label: eve.name, detail: `${plural(eveningTotal, "guest", "guests")} at ${money(eve.perHead)}`, amount: eveningTotal * eve.perHead });
-        if (drinks.perHead > 0) lines.push({ label: `${drinks.name} drinks`, detail: `${plural(state.day, "guest", "guests")} at ${money(drinks.perHead)}`, amount: state.day * drinks.perHead });
+        if (!PENDING.has("feasting")) lines.push({ label: `${menu.name} menu`, detail: `${plural(state.day, "guest", "guests")} at ${money(menu.perHead)}`, amount: state.day * menu.perHead });
+        if (!PENDING.has("feasting") && eve.perHead > 0) lines.push({ label: eve.name, detail: `${plural(eveningTotal, "guest", "guests")} at ${money(eve.perHead)}`, amount: eveningTotal * eve.perHead });
+        if (!PENDING.has("drinks") && drinks.perHead > 0) lines.push({ label: `${drinks.name} drinks`, detail: `${plural(state.day, "guest", "guests")} at ${money(drinks.perHead)}`, amount: state.day * drinks.perHead });
       }
     }
-    if (priced) for (const id of state.extras) {
+    if (priced && !PENDING.has("extras")) for (const id of state.extras) {
       const x = P.extras.find((e: any) => e.id === id); if (!x || (winter && x.summerOnly)) continue;
       if (x.per === "dayGuest") lines.push({ label: x.name, detail: `${plural(state.day, "guest", "guests")} at ${money(x.price)}`, amount: state.day * x.price });
       else lines.push({ label: x.name, detail: "", amount: x.price });
@@ -384,42 +382,22 @@ const anySample = pricing.sampleSections.length > 0;
   }
 
   function schedule(total: number) {
-    const plan = P.payment.plans.find((p: any) => p.id === state.plan);
+    const plan = P.payment.plans.find((p: any) => p.id === state.plan) ?? P.payment.plans[0];
     const weeks = P.payment.balanceWeeksBefore;
     const exact = state.date ? parseDate(state.date) : null;
-    const approx = exact ?? new Date(state.year, state.month - 1, 15);
-    const balanceDate = new Date(approx); balanceDate.setDate(balanceDate.getDate() - weeks * 7);
-    const balanceWhen = exact ? `By ${longDate(balanceDate)}` : `${weeks} weeks before your wedding`;
+    let balanceWhen = "Before your wedding day";
+    if (weeks && exact) { const d = new Date(exact); d.setDate(d.getDate() - weeks * 7); balanceWhen = `By ${longDate(d)}`; }
+    else if (weeks) balanceWhen = `${weeks} weeks before your wedding`;
     const rows: { label: string; when: string; amount: string }[] = [];
     let paid = 0;
     plan.steps.forEach((s: any, i: number) => {
       const last = i === plan.steps.length - 1;
       const amount = last ? Math.round(total) - paid : Math.round(total * s.share);
       if (!last) paid += amount;
-      if (s.when === "booking") rows.push({ label: s.label, when: "When you book", amount: pounds(amount) });
-      else if (s.when === "balance") rows.push({ label: s.label, when: balanceWhen, amount: pounds(amount) });
-      else if (s.when === "monthsAfterBooking") {
-        const due = addMonths(today, s.months);
-        const late = due >= balanceDate;
-        rows.push({ label: s.label, when: late ? "With your final balance" : `${plural(s.months, "month", "months")} after booking`, amount: pounds(amount) });
-      } else if (s.when === "monthly") {
-        const first = addMonths(today, 1);
-        let n = (balanceDate.getFullYear() - first.getFullYear()) * 12 + (balanceDate.getMonth() - first.getMonth()) + 1;
-        n = Math.max(1, n);
-        const each = amount / n;
-        const end = addMonths(first, n - 1);
-        const span = n === 1 ? monthYear(first) : `${monthYear(first)} to ${monthYear(end)}`;
-        rows.push({
-          label: n === 1 ? "Remaining balance" : `${exact ? "" : "About "}${n} monthly payments`,
-          when: span,
-          amount: n === 1 ? pounds(amount) : `${pounds(each)} a month`,
-        });
-      }
+      const when = s.when === "booking" ? "When you book" : s.when === "balance" ? balanceWhen : "Date agreed with your coordinator";
+      rows.push({ label: s.label, when, amount: pounds(amount) });
     });
-    const note = exact
-      ? `Based on booking today for ${longDate(exact)}.`
-      : `Based on booking today for ${MONTHS[state.month - 1]} ${state.year}. Choose a date in step 1 for exact dates.`;
-    return { plan, rows, note };
+    return { plan, rows, note: P.payment.note ?? "" };
   }
 
   // ---------- render ----------
@@ -432,6 +410,7 @@ const anySample = pricing.sampleSections.length > 0;
       form.querySelectorAll<HTMLInputElement>(`input[name="${k}"]`).forEach((el) => (el.checked = el.value === String(state[k])));
     form.querySelectorAll<HTMLInputElement>('input[name="extras"]').forEach((el) => (el.checked = state.extras.includes(el.value)));
     form.querySelector<HTMLElement>("[data-clear-date]")!.hidden = !state.date;
+    if (state.date) { dateInput.hidden = false; form.querySelector<HTMLElement>("[data-pick-date]")!.hidden = true; }
   }
 
   function render() {
@@ -440,7 +419,7 @@ const anySample = pricing.sampleSections.length > 0;
     const season = r.winter ? P.winter : P.summer;
 
     // show the sections that apply to this season
-    document.querySelectorAll<HTMLElement>("[data-mode]").forEach((el) => (el.hidden = el.dataset.mode !== (r.winter ? "winter" : "summer")));
+    document.querySelectorAll<HTMLElement>("[data-mode]").forEach((el) => (el.hidden = el.hasAttribute("data-pending") || el.dataset.mode !== (r.winter ? "winter" : "summer")));
 
     const when = state.date ? longDate(parseDate(state.date)) : `${r.when} · ${MONTHS[state.month - 1]} ${state.year}`;
     $("s-date").textContent = when;
@@ -451,8 +430,11 @@ const anySample = pricing.sampleSections.length > 0;
     $("s-guests").textContent = `${state.day} day · ${r.eveningTotal} evening`;
     $("guest-note").textContent = `The Lodge welcomes up to ${g.maxDay} guests for the wedding breakfast and ${g.maxEveningTotal} in the evening.` +
       (r.winter ? ` The winter collection is priced for ${P.winter.includedGuests} guests, with additional guests charged separately.` : "");
-    $("s-food").textContent = r.winter ? "Included" : (r.eve.perHead > 0 ? `${r.menu.name} · ${r.eve.name}` : r.menu.name);
-    $("s-drinks").textContent = r.winter ? "Included" : r.drinks.name;
+    $("s-food").textContent = r.winter ? "Included" : PENDING.has("feasting") ? "Priced separately" : (r.eve.perHead > 0 ? `${r.menu.name} · ${r.eve.name}` : r.menu.name);
+    $("s-drinks").textContent = r.winter ? "Included" : PENDING.has("drinks") ? "Priced separately" : r.drinks.name;
+    const hireOnly = !r.winter && (PENDING.has("feasting") || PENDING.has("drinks"));
+    $("scope").textContent = !r.priced ? "" : hireOnly ? "Venue hire only. Catering, drinks, styling and other wedding services are priced separately."
+      : r.winter ? "Food, drinks, essential wedding styling and dedicated coordination are included." : "";
     const chosen = state.extras.filter((id: string) => { const x = P.extras.find((e: any) => e.id === id); return x && !(r.winter && x.summerOnly); });
     $("s-extras").textContent = chosen.length ? plural(chosen.length, "extra", "extras") : "None chosen";
 
@@ -471,7 +453,7 @@ const anySample = pricing.sampleSections.length > 0;
       $("s-plan").textContent = s.plan.name;
       $("total").textContent = pounds(r.total);
       $("bar-total").textContent = pounds(r.total);
-      $("per-guest").textContent = `About ${pounds(r.total / Math.max(1, state.day))} per day guest`;
+      $("per-guest").textContent = hireOnly ? "" : `About ${pounds(r.total / Math.max(1, state.day))} per day guest`;
       $("lines").replaceChildren(...r.lines.map((l) => {
         const row = document.createElement("div"); row.className = "calc-line";
         const dt = document.createElement("dt"); dt.textContent = l.label;
@@ -520,16 +502,22 @@ const anySample = pricing.sampleSections.length > 0;
   form.addEventListener("submit", (e) => e.preventDefault());
 
   form.addEventListener("click", (e) => {
-    const el = (e.target as HTMLElement).closest<HTMLElement>("[data-step],[data-next],[data-clear-date]");
+    const el = (e.target as HTMLElement).closest<HTMLElement>("[data-step],[data-next],[data-clear-date],[data-pick-date]");
     if (!el) return;
     if (el.dataset.step) {
       const k = el.dataset.step; const jump = 5;
       const cur = state[k]; const dir = Number(el.dataset.dir);
       state[k] = dir > 0 ? Math.floor(cur / jump) * jump + jump : Math.ceil(cur / jump) * jump - jump;
       clampGuests(); syncInputs(); render();
-    } else if (el.hasAttribute("data-clear-date")) { state.date = ""; syncInputs(); render(); }
+    } else if (el.hasAttribute("data-clear-date")) {
+      state.date = ""; dateInput.hidden = true; form.querySelector<HTMLElement>("[data-pick-date]")!.hidden = false; syncInputs(); render();
+    } else if (el.hasAttribute("data-pick-date")) {
+      el.hidden = true; dateInput.hidden = false; dateInput.focus();
+      try { (dateInput as any).showPicker?.(); } catch { /* the field is visible and focused, which is enough */ }
+    }
     else if (el.hasAttribute("data-next")) {
-      const cur = el.closest("details")!; const next = cur.nextElementSibling as HTMLDetailsElement | null;
+      const cur = el.closest("details")!; let next = cur.nextElementSibling as HTMLDetailsElement | null;
+      while (next && next.hidden) next = next.nextElementSibling as HTMLDetailsElement | null;
       if (next) { cur.open = false; next.open = true; next.querySelector("summary")!.focus({ preventScroll: true }); next.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
     }
   });
@@ -586,7 +574,10 @@ const anySample = pricing.sampleSections.length > 0;
   }
   .calc-step > summary::-webkit-details-marker { display: none; }
   .calc-step > summary:hover { color: var(--accent); }
+  .calc-steps { counter-reset: calc-step; }
+  .calc-step:not([hidden]) { counter-increment: calc-step; }
   .calc-step__num { font-size: var(--text-xs); letter-spacing: var(--tracking-wide); color: var(--taupe); min-width: 1.2em; }
+  .calc-step__num::before { content: counter(calc-step); }
   .calc-step__title { font-size: var(--text-lg); letter-spacing: -0.01em; line-height: 1.2; }
   .calc-step__value { font-size: var(--text-sm); color: var(--stone); text-align: right; }
   .calc-step[open] .calc-step__value { visibility: hidden; }
@@ -683,11 +674,15 @@ const anySample = pricing.sampleSections.length > 0;
   }
   .calc-next:hover { background: var(--ink); color: var(--bg); }
   .calc-next--link { display: none; }
+  .calc-next--small { min-height: 40px; padding: 0 1.2em; border-color: var(--hairline); }
+  .calc-next--small:hover { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 
   /* ---- estimate ---- */
   .calc-summary { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius); padding: clamp(1.5rem, 3vw, 2.25rem); display: grid; gap: .35rem; scroll-margin-top: calc(var(--header-h) + 1rem); }
   .calc-summary__total { font-size: var(--text-display); line-height: 1; letter-spacing: -0.03em; color: var(--ink-strong); margin-top: .5rem; font-variant-numeric: lining-nums; }
   .calc-summary__per { font-size: var(--text-sm); color: var(--stone); }
+  .calc-summary__scope { font-size: var(--text-sm); color: var(--stone); line-height: 1.5; }
+  .calc-summary__scope:empty, .calc-summary__per:empty { display: none; }
   .calc-summary__context { font-size: var(--text-sm); color: var(--ink); margin-top: .35rem; }
   .calc-lines { margin-top: 1.25rem; border-top: 1px solid var(--hairline); }
   .calc-line { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: .7rem 0; border-bottom: 1px solid var(--hairline); }
