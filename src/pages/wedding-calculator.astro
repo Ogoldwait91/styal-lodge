@@ -11,6 +11,9 @@ const MONTHS = ["January", "February", "March", "April", "May", "June", "July", 
 const fmt = (n: number) => "£" + (Number.isInteger(n) ? n.toLocaleString("en-GB") : n.toFixed(2));
 const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touches", "Payment plan"];
 const pending = (k: string) => pricing.pendingSections.includes(k);
+// While the rest of the site is unfinished the calculator stands alone: no menu, no footer, no links out.
+// Set this to false to put it back inside the site once the site is ready.
+const STANDALONE = true;
 const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between, so the step is hidden
 const SEPARATE = "Priced separately. Your coordinator will take you through the options and prices.";
 ---
@@ -18,13 +21,14 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
   title="Wedding calculator — Styal Lodge"
   description="See venue prices for your date at Styal Lodge and how the payments are spread."
   showFloatingCta={false}
+  standalone={STANDALONE}
 >
-  <div class="calc-page">
+  <div class:list={["calc-page", STANDALONE && "calc-page--standalone"]}>
     <header class="calc-mast container">
       <img class="calc-mast__logo" src="/logo-dark.svg" width="971" height="617" alt="Styal Lodge — Wedding Venue, Cheshire" data-hero-wordmark />
       <p class="eyebrow">Plan your day</p>
       <h1 class="display">Wedding <em>calculator</em></h1>
-      <p class="calc-mast__lead">Choose your date and guests to see the price for your day and how the payments are spread.</p>
+      <p class="calc-mast__lead">Choose your date and guest numbers to see the price for your day.</p>
     </header>
 
     <div class="calc container">
@@ -78,7 +82,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
                 <input type="date" id="f-date" name="date" hidden />
                 <button type="button" class="calc-link" data-clear-date hidden>Clear date</button>
               </div>
-              <p class="calc-hint">Choosing a date fills in the year, month and day, and puts real dates on your payment plan.</p>
+              <p class="calc-hint">Choosing a date fills in the year, month and day for you, and appears on your estimate.</p>
             </div>
             <p class="calc-price-line"><span data-out="hire-label"></span> <strong data-out="hire-inline"></strong> <span data-out="season-inline"></span></p>
             <button type="button" class="calc-next" data-next>Next: {steps[1]}</button>
@@ -257,8 +261,8 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
         </div>
 
         <div class="calc-actions">
-          <a class="btn btn--solid" href="/book-a-visit">Book a visit</a>
-          <button type="button" class="btn btn--ghost" data-print>Print or save as PDF</button>
+          {!STANDALONE && <a class="btn btn--solid" href="/book-a-visit">Book a visit</a>}
+          <button type="button" class:list={["btn", STANDALONE ? "btn--solid calc-actions__wide" : "btn--ghost"]} data-print>Print or save as PDF</button>
           <button type="button" class="calc-link" data-copy>Copy a link to this estimate</button>
         </div>
 
@@ -269,6 +273,8 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
         </p>
       </aside>
     </div>
+
+    {STANDALONE && <p class="calc-foot container">Styal Lodge · Station Road, Styal, Cheshire SK9 4JN</p>}
 
     <!-- Phone: running total pinned to the bottom -->
     <a class="calc-bar" href="#estimate" data-bar>
@@ -433,7 +439,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
     $("hire-inline").textContent = r.priced ? pounds(r.base) : "to be confirmed";
     $("season-inline").textContent = `(${season.label})`;
     $("holiday-note").textContent = r.winter ? "Charged at the Friday to Sunday rate" : "Charged at the Saturday rate";
-    $("s-guests").textContent = `${state.day} day · ${r.eveningTotal} evening`;
+    $("s-guests").textContent = state.evening ? `${state.day} day · ${state.evening} evening-only` : `${plural(state.day, "day guest", "day guests")}`;
     $("guest-note").textContent = `The Lodge welcomes up to ${g.maxDay} guests for the wedding breakfast and ${g.maxEveningTotal} in the evening.` +
       (r.winter ? ` The winter collection is priced for ${P.winter.includedGuests} guests, with additional guests charged separately.` : "");
     $("s-food").textContent = r.winter ? "Included" : PENDING.has("feasting") ? "Priced separately" : (r.eve.perHead > 0 ? `${r.menu.name} · ${r.eve.name}` : r.menu.name);
@@ -555,6 +561,11 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
   /* ============ Wedding calculator ============ */
   .calc-page { padding-bottom: calc(var(--stack-gap) * 1.75); }
   .calc-page :is(label, legend, small, button, input, select, dt, dd, li, .calc-hint, .calc-card__blurb, .calc-card__price, .calc-step__value) { letter-spacing: 0.01em; }
+
+  /* ---- standalone: no site header above, so nothing to offset ---- */
+  .calc-page--standalone { --header-h: 0px; padding-top: clamp(1.5rem, 4vw, 3rem); }
+  .calc-actions__wide { grid-column: 1 / -1; }
+  .calc-foot { margin-top: calc(var(--stack-gap) * 1.2); text-align: center; font-size: var(--text-xs); letter-spacing: 0.04em; color: var(--stone); }
 
   /* ---- masthead ---- */
   .calc-mast { display: grid; justify-items: center; text-align: center; padding-bottom: calc(var(--stack-gap) * .65); }
@@ -738,7 +749,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
   /* ---- print: a clean one-page estimate ---- */
   @media print {
     @page { margin: 16mm; }
-    .site-header, .site-footer, .skip-link, .calc-steps, .calc-bar, .calc-actions, .calc-sample, .calc-mast__lead, .calc-mast .eyebrow { display: none !important; }
+    .site-header, .site-footer, .skip-link, .calc-steps, .calc-bar, .calc-actions, .calc-foot, .calc-sample, .calc-mast__lead, .calc-mast .eyebrow { display: none !important; }
     body { background: #fff; }
     .calc-page { padding: 0; }
     .calc-mast { padding-bottom: 8mm; }
