@@ -104,7 +104,7 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
           <div class="calc-step__body">
             {[
               { id: "day", label: "Day guests", hint: "Ceremony, wedding breakfast and evening", mode: undefined },
-              { id: "evening", label: "Evening-only guests", hint: "Joining for the party", mode: "winter" },
+              { id: "evening", label: "Evening-only guests", hint: "Joining for the party", mode: undefined },
             ].map((g) => (
               <div class="calc-stepper" data-mode={g.mode}>
                 <div>
@@ -355,6 +355,7 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
         base = table[useHoliday ? P.summer.holidayRate : useDay];
         lines.push({ label: baseLabel, detail: `${when}, ${P.summer.label.toLowerCase().replace("styal", "Styal")} ${state.year}`, amount: base });
         if (FEAST) lines.push({ label: FEAST.name, detail: `${plural(state.day, "guest", "guests")} at ${money(FEAST.perGuest)}. ${FEAST.includes}`, amount: state.day * FEAST.perGuest });
+        if (FEAST && state.evening > 0) lines.push({ label: "Evening-only guests", detail: `${state.evening} at ${money(FEAST.eveningGuest)}. Evening food`, amount: state.evening * FEAST.eveningGuest });
       }
     }
     lines.forEach((l) => (l.amount = Math.round(l.amount)));   // whole pounds, so the lines always add up to the total
@@ -451,9 +452,9 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
     $("season-inline").textContent = `(${season.label})`;
     const hol = holidayName(state.date);
     $("holiday-note").textContent = (hol && state.holiday ? `${longDate(parseDate(state.date))} is ${hol}. ` : "") + (r.winter ? "Charged at the Friday to Sunday rate" : "Charged at the Saturday rate");
-    $("s-guests").textContent = state.evening && r.winter ? `${state.day} day · ${state.evening} evening-only` : `${plural(state.day, "day guest", "day guests")}`;
+    $("s-guests").textContent = state.evening ? `${state.day} day · ${state.evening} evening-only` : `${plural(state.day, "day guest", "day guests")}`;
     $("guest-note").textContent = `The Lodge welcomes up to ${g.maxDay} guests for the wedding breakfast and ${g.maxEveningTotal} in the evening.` +
-      (summerFeast ? ` Feasting is ${money(FEAST.perGuest)} per guest.` : "") +
+      (summerFeast ? ` Feasting is ${money(FEAST.perGuest)} per day guest. Evening-only guests are ${money(FEAST.eveningGuest)} each, for evening food.` : "") +
       (r.winter && r.priced ? ` The winter collection is priced for ${P.winter.includedGuests} guests. Each additional day guest is ${money(P.winter.collection[String(state.year)].extraDayGuest)} and each evening-only guest is ${money(P.winter.collection[String(state.year)].eveningGuest)}.` : "");
     $("season-note").textContent = r.winter
       ? "Included in the winter collection: food, drinks, essential wedding styling and dedicated coordination."
@@ -463,7 +464,7 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
     $("for").textContent = state.couple ? `For ${state.couple}` : "";
     $("done-for").textContent = state.couple ? ` for ${state.couple}` : "";
     $("scope").textContent = !r.priced ? "" : hireOnly ? "Catering, drinks and styling are not included in this figure. They are priced separately."
-      : summerFeast ? "Drinks are not included in this figure. All alcoholic and non-alcoholic drinks are priced separately, as are styling and other wedding services." : "";
+      : summerFeast ? "Drinks are not included in this figure. All alcoholic and non-alcoholic drinks are priced separately, as is styling." : "";
 
     const summary = document.getElementById("estimate")!;
     summary.classList.toggle("is-unpriced", !r.priced);
@@ -471,7 +472,7 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
     summary.classList.toggle("is-hire-only", !r.winter && r.priced);
     const heading = hireOnly ? "Venue hire only" : summerFeast ? "Venue hire and feasting" : "Your estimate";
     $("heading").textContent = heading; $("bar-label").textContent = heading;
-    $("context").textContent = `${season.label} · ${when}` + (hireOnly ? "" : ` · ${plural(state.day, "day guest", "day guests")}` + (state.evening && r.winter ? `, ${state.evening} more in the evening` : ""));
+    $("context").textContent = `${season.label} · ${when}` + (hireOnly ? "" : ` · ${plural(state.day, "day guest", "day guests")}` + (state.evening ? `, ${state.evening} more in the evening` : ""));
 
     if (!r.priced) {
       $("total").textContent = "To be confirmed";
@@ -508,7 +509,7 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
     const alt = calculate(r.winter ? 6 : 11);
     const wc = P.winter.collection[String(state.year)];
     $("compare").textContent = r.winter
-      ? (alt.priced ? `In summer (April to September), venue hire for the same day is ${pounds(alt.base)}${FEAST ? `, with feasting at ${money(FEAST.perGuest)} per guest` : ""}. Drinks and styling are priced separately.` : `Summer prices for ${state.year} are yet to be confirmed.`)
+      ? (alt.priced ? `In summer (April to September), venue hire for the same day is ${pounds(alt.base)}${FEAST ? `, with feasting at ${money(FEAST.perGuest)} per day guest and ${money(FEAST.eveningGuest)} per evening-only guest` : ""}. Drinks and styling are priced separately.` : `Summer prices for ${state.year} are yet to be confirmed.`)
       : (alt.priced ? `In winter (October to March), the same day is ${pounds(alt.base)} for ${P.winter.includedGuests} guests, with food, drinks and styling included. Additional day guests are ${money(wc.extraDayGuest)} each and evening-only guests ${money(wc.eveningGuest)} each.` : `Winter prices for ${state.year} are yet to be confirmed.`);
     document.querySelector<HTMLElement>("[data-switch]")!.textContent = r.winter ? "Show a summer date" : "Show a winter date";
 
