@@ -28,7 +28,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
       <img class="calc-mast__logo" src="/logo-dark.svg" width="971" height="617" alt="Styal Lodge — Wedding Venue, Cheshire" data-hero-wordmark />
       <p class="eyebrow">Plan your day</p>
       <h1 class="display">Wedding <em>calculator</em></h1>
-      <p class="calc-mast__lead">Choose your date and guest numbers to see the price for your day.</p>
+      <p class="calc-mast__lead">Choose your date to see the price for your day.</p>
     </header>
 
     <div class="calc container">
@@ -43,6 +43,15 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
             <span class="calc-step__chev" aria-hidden="true"></span>
           </summary>
           <div class="calc-step__body">
+            <div class="calc-field">
+              <label for="f-date">Wedding date</label>
+              <div class="calc-date">
+                <input type="date" id="f-date" name="date" />
+                <button type="button" class="calc-link" data-clear-date hidden>Clear date</button>
+              </div>
+              <p class="calc-hint" data-out="date-note"></p>
+            </div>
+            <p class="calc-or">No date yet? Choose a year, month and day of the week.</p>
             <fieldset class="calc-field">
               <legend>Year</legend>
               <div class="calc-chips">
@@ -75,22 +84,13 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
                 <span class="calc-check__note" data-out="holiday-note"></span>
               </span>
             </label>
-            <div class="calc-field calc-field--quiet">
-              <label for="f-date">Already have a date in mind? <span class="calc-opt">Optional</span></label>
-              <div class="calc-date">
-                <button type="button" class="calc-next calc-next--small" data-pick-date>Choose a date</button>
-                <input type="date" id="f-date" name="date" hidden />
-                <button type="button" class="calc-link" data-clear-date hidden>Clear date</button>
-              </div>
-              <p class="calc-hint">Choosing a date fills in the year, month and day for you, and appears on your estimate.</p>
-            </div>
             <p class="calc-price-line"><span data-out="hire-label"></span> <strong data-out="hire-inline"></strong> <span data-out="season-inline"></span></p>
             <button type="button" class="calc-next" data-next></button>
           </div>
         </details>
 
-        <!-- 2. Guests -->
-        <details class="calc-step" name="calc-step">
+        <!-- 2. Guests (hidden when guest numbers do not change the price) -->
+        <details class="calc-step" name="calc-step" data-guests>
           <summary>
             <span class="calc-step__num" aria-hidden="true"></span>
             <span class="calc-step__title">{steps[1]}</span>
@@ -499,13 +499,17 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
     (form.elements.namedItem("couple") as HTMLInputElement).value = state.couple;
     (form.elements.namedItem("coordinator") as HTMLInputElement).value = state.coordinator;
     form.querySelector<HTMLElement>("[data-clear-date]")!.hidden = !state.date;
-    if (state.date) { dateInput.hidden = false; form.querySelector<HTMLElement>("[data-pick-date]")!.hidden = true; }
   }
 
   function render() {
     const r = calculate();
     const g = P.guests;
     const season = r.winter ? P.winter : P.summer;
+    const hireOnly = !r.winter && (PENDING.has("feasting") || PENDING.has("drinks"));
+    // guest numbers only matter where they change the price
+    const guestStep = form.querySelector<HTMLDetailsElement>("details[data-guests]")!;
+    if (hireOnly && guestStep.open) guestStep.open = false;
+    guestStep.hidden = hireOnly;
 
     // sections with nothing to choose (included in winter, or priced separately) step out of the way
     form.querySelectorAll<HTMLDetailsElement>("details[data-choice]").forEach((d) => {
@@ -521,7 +525,9 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
     // show the sections that apply to this season
     document.querySelectorAll<HTMLElement>("[data-mode]").forEach((el) => (el.hidden = el.hasAttribute("data-pending") || el.dataset.mode !== (r.winter ? "winter" : "summer")));
 
-    const when = state.date ? longDate(parseDate(state.date)) : `${r.when} · ${MONTHS[state.month - 1]} ${state.year}`;
+    const exact = state.date ? parseDate(state.date) : null;
+    const when = exact ? `${exact.toLocaleDateString("en-GB", { weekday: "long" })} ${longDate(exact)}` : `${r.when} · ${MONTHS[state.month - 1]} ${state.year}`;
+    $("date-note").textContent = exact ? `${when}. ${season.label}.` : "Pick a date and the year, month and day are filled in for you.";
     $("s-date").textContent = when;
     $("hire-label").textContent = r.baseLabel;
     $("hire-inline").textContent = r.priced ? pounds(r.base) : "to be confirmed";
@@ -530,16 +536,15 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
     $("holiday-note").textContent = (hol && state.holiday ? `${longDate(parseDate(state.date))} is ${hol}. ` : "") + (r.winter ? "Charged at the Friday to Sunday rate" : "Charged at the Saturday rate");
     $("s-guests").textContent = state.evening ? `${state.day} day · ${state.evening} evening-only` : `${plural(state.day, "day guest", "day guests")}`;
     $("guest-note").textContent = `The Lodge welcomes up to ${g.maxDay} guests for the wedding breakfast and ${g.maxEveningTotal} in the evening.` +
-      (r.winter ? ` The winter collection is priced for ${P.winter.includedGuests} guests, with additional guests charged separately.` : " In summer, guest numbers do not change the venue hire price.");
+      (r.winter && r.priced ? ` The winter collection is priced for ${P.winter.includedGuests} guests. Each additional day guest is ${money(P.winter.collection[String(state.year)].extraDayGuest)} and each evening-only guest is ${money(P.winter.collection[String(state.year)].eveningGuest)}.` : "");
     $("season-note").textContent = r.winter
       ? "Included in the winter collection: food, drinks, essential wedding styling and dedicated coordination."
-      : (PENDING.has("feasting") || PENDING.has("drinks")) ? "Catering, drinks and styling are priced separately. Your coordinator will take you through the options and prices." : "";
+      : hireOnly ? `Guest numbers do not change the venue hire price. The Lodge welcomes up to ${g.maxDay} guests for the wedding breakfast and ${g.maxEveningTotal} in the evening.` : "";
     $("s-names").textContent = state.couple || "Optional";
     $("for").textContent = state.couple ? `For ${state.couple}` : "";
     $("done-for").textContent = state.couple ? ` for ${state.couple}` : "";
     $("s-food").textContent = r.winter ? "Included" : PENDING.has("feasting") ? "Priced separately" : (r.eve.perHead > 0 ? `${r.menu.name} · ${r.eve.name}` : r.menu.name);
     $("s-drinks").textContent = r.winter ? "Included" : PENDING.has("drinks") ? "Priced separately" : r.drinks.name;
-    const hireOnly = !r.winter && (PENDING.has("feasting") || PENDING.has("drinks"));
     $("scope").textContent = !r.priced ? "" : hireOnly ? "Venue hire only. Catering, drinks, styling and other wedding services are priced separately."
       : "";
     const chosen = state.extras.filter((id: string) => { const x = P.extras.find((e: any) => e.id === id); return x && !(r.winter && x.summerOnly); });
@@ -547,7 +552,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
 
     const summary = document.getElementById("estimate")!;
     summary.classList.toggle("is-unpriced", !r.priced);
-    $("context").textContent = `${season.label} · ${when} · ${plural(state.day, "day guest", "day guests")}` + (state.evening ? `, ${state.evening} more in the evening` : "");
+    $("context").textContent = `${season.label} · ${when}` + (hireOnly ? "" : ` · ${plural(state.day, "day guest", "day guests")}` + (state.evening ? `, ${state.evening} more in the evening` : ""));
 
     if (!r.priced) {
       $("total").textContent = "To be confirmed";
@@ -580,12 +585,12 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
     }
     $("prepared").textContent = `Prepared ${longDate(today)}${state.coordinator ? ` by ${state.coordinator}` : ""}. `;
 
-    // compare with the other season, for the same day and guest numbers
+    // compare with the other season, for the same day of the week
     const alt = calculate(r.winter ? 6 : 11);
-    const who = `${plural(state.day, "day guest", "day guests")}${state.evening ? ` and ${state.evening} evening-only` : ""}`;
+    const wc = P.winter.collection[String(state.year)];
     $("compare").textContent = r.winter
-      ? (alt.priced ? `In summer (April to September), venue hire for the same day is ${pounds(alt.total)}, with catering and drinks priced separately.` : `Summer prices for ${state.year} are yet to be confirmed.`)
-      : (alt.priced ? `In winter (October to March), the same day is ${pounds(alt.total)} all-inclusive for ${who}: food, drinks and styling included.` : `Winter prices for ${state.year} are yet to be confirmed.`);
+      ? (alt.priced ? `In summer (April to September), venue hire for the same day is ${pounds(alt.base)}. Catering, drinks and styling are priced separately.` : `Summer prices for ${state.year} are yet to be confirmed.`)
+      : (alt.priced ? `In winter (October to March), the same day is ${pounds(alt.base)} for ${P.winter.includedGuests} guests, with food, drinks and styling included. Additional day guests are ${money(wc.extraDayGuest)} each and evening-only guests ${money(wc.eveningGuest)} each.` : `Winter prices for ${state.year} are yet to be confirmed.`);
     document.querySelector<HTMLElement>("[data-switch]")!.textContent = r.winter ? "Show a summer date" : "Show a winter date";
 
     // label each Next button with the section it leads to
@@ -644,7 +649,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
   form.addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.target as HTMLElement).matches("input[type=text], input[type=number]")) e.preventDefault(); });
 
   form.addEventListener("click", (e) => {
-    const el = (e.target as HTMLElement).closest<HTMLElement>("[data-step],[data-next],[data-clear-date],[data-pick-date]");
+    const el = (e.target as HTMLElement).closest<HTMLElement>("[data-step],[data-next],[data-clear-date]");
     if (!el) return;
     if (el.dataset.step) {
       const k = el.dataset.step; const jump = 5;
@@ -652,10 +657,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
       state[k] = dir > 0 ? Math.floor(cur / jump) * jump + jump : Math.ceil(cur / jump) * jump - jump;
       clampGuests(); syncInputs(); render();
     } else if (el.hasAttribute("data-clear-date")) {
-      state.date = ""; dateInput.hidden = true; form.querySelector<HTMLElement>("[data-pick-date]")!.hidden = false; syncInputs(); render();
-    } else if (el.hasAttribute("data-pick-date")) {
-      el.hidden = true; dateInput.hidden = false; dateInput.focus();
-      try { (dateInput as any).showPicker?.(); } catch { /* the field is visible and focused, which is enough */ }
+      state.date = ""; syncInputs(); render();
     }
     else if (el.hasAttribute("data-next")) {
       const cur = el.closest("details")!; let next = cur.nextElementSibling as HTMLDetailsElement | null;
@@ -682,7 +684,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
   document.querySelectorAll("[data-reset]").forEach((b) => b.addEventListener("click", () => {
     const keep = state.coordinator;
     Object.assign(state, JSON.parse(JSON.stringify(DEFAULTS)), { coordinator: keep });
-    finished = false; dateInput.hidden = true; form.querySelector<HTMLElement>("[data-pick-date]")!.hidden = false;
+    finished = false;
     document.getElementById("estimate")!.classList.remove("is-ready");
     clampGuests(); syncInputs(); panels.forEach((d, i) => (d.open = i === 0)); render();
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -691,7 +693,6 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
   // Compare: jump to the other season, keeping the day and guest numbers
   document.querySelector("[data-switch]")!.addEventListener("click", () => {
     state.month = P.winter.months.includes(state.month) ? 6 : 11; state.date = "";
-    dateInput.hidden = true; form.querySelector<HTMLElement>("[data-pick-date]")!.hidden = false;
     syncInputs(); render();
   });
   const copyBtn = document.querySelector<HTMLButtonElement>("[data-copy]")!;
@@ -767,7 +768,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
   .calc-field > legend { margin-bottom: .6rem; }
   .calc-opt { color: var(--taupe); font-size: var(--text-xs); margin-left: .35em; }
   .calc-hint { font-size: var(--text-xs); color: var(--stone); line-height: 1.5; }
-  .calc-field--quiet { padding-top: 1.2rem; border-top: 1px dashed var(--hairline); }
+  .calc-or { padding-top: 1.2rem; border-top: 1px dashed var(--hairline); font-size: var(--text-sm); color: var(--stone); }
 
   .calc-chips { display: flex; flex-wrap: wrap; gap: .5rem; }
   .calc-chip { position: relative; cursor: pointer; }

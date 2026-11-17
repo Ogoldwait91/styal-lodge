@@ -124,8 +124,8 @@
   "guests": {
     "maxDay": 160,
     "maxEveningTotal": 180,
-    "defaultDay": 80,
-    "defaultEvening": 30
+    "defaultDay": 50,
+    "defaultEvening": 0
   },
   "menus": [
     {
