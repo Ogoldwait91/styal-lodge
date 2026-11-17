@@ -26,7 +26,16 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
       <img class="calc-mast__logo" src="/logo-dark.svg" width="971" height="617" alt="Styal Lodge — Wedding Venue, Cheshire" data-hero-wordmark />
       <p class="eyebrow">Plan your day</p>
       <h1 class="display">Wedding <em>calculator</em></h1>
-      <p class="calc-mast__lead">Choose your date and guest numbers to see the price for your day.</p>
+      <p class="calc-mast__lead">Choose your season, date and guest numbers to see the price for your day.</p>
+      <fieldset class="calc-season">
+        <legend class="visually-hidden">Season</legend>
+        {[pricing.summer, pricing.winter].map((sn, i) => (
+          <label class="calc-chip calc-chip--priced calc-chip--season">
+            <input type="radio" name="season" value={i === 0 ? "summer" : "winter"} />
+            <span><span>{sn.label}</span><small>{MONTHS[sn.months[0] - 1]} to {MONTHS[sn.months[sn.months.length - 1] - 1]}</small></span>
+          </label>
+        ))}
+      </fieldset>
     </header>
 
     <div class="calc container">
@@ -53,7 +62,6 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
               <label for="f-month">Month</label>
               <div class="calc-select">
                 <select id="f-month" name="month">
-                  {MONTHS.map((m, i) => (<option value={i + 1}>{m}</option>))}
                 </select>
               </div>
             </div>
@@ -389,8 +397,22 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
     sel.replaceChildren(...opts);
   }
 
+  // The month list only ever holds the months of the chosen season.
+  const SEASON_START = { summer: 6, winter: 12 };   // the month shown first when a season is chosen
+  const seasonOf = (month: number) => (P.winter.months.includes(month) ? "winter" : "summer");
+  function buildMonths() {
+    const months = [...P[seasonOf(state.month)].months].sort((a: number, b: number) => a - b);
+    (form.elements.namedItem("month") as HTMLSelectElement).replaceChildren(...months.map((m: number) => new Option(MONTHS[m - 1], String(m))));
+    document.querySelectorAll<HTMLInputElement>('input[name="season"]').forEach((el) => (el.checked = el.value === seasonOf(state.month)));
+  }
+  function setSeason(season: "summer" | "winter") {
+    if (seasonOf(state.month) === season) return;
+    state.month = SEASON_START[season]; state.date = ""; state.holiday = false;
+    syncInputs(); render();
+  }
+
   function syncInputs() {
-    buildDates();
+    buildMonths(); buildDates();
     (form.elements.namedItem("month") as HTMLSelectElement).value = String(state.month);
     (form.elements.namedItem("date") as HTMLSelectElement).value = state.date;
     (form.elements.namedItem("holiday") as HTMLInputElement).checked = state.holiday;
@@ -582,9 +604,10 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
 
   // Compare: jump to the other season, keeping the day and guest numbers
   document.querySelector("[data-switch]")!.addEventListener("click", () => {
-    state.month = P.winter.months.includes(state.month) ? 6 : 11; state.date = "";
-    syncInputs(); render();
+    setSeason(seasonOf(state.month) === "winter" ? "summer" : "winter");
   });
+  document.querySelectorAll<HTMLInputElement>('input[name="season"]').forEach((el) =>
+    el.addEventListener("change", () => { if (el.checked) setSeason(el.value as "summer" | "winter"); }));
   const copyBtn = document.querySelector<HTMLButtonElement>("[data-copy]")!;
   copyBtn.addEventListener("click", async () => {
     const original = "Copy a link to this estimate";
@@ -618,6 +641,8 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
   .calc-mast__logo { height: clamp(60px, 7vw, 108px); width: auto; margin-bottom: clamp(1.25rem, 2.5vw, 2rem); }
   .calc-mast .display { font-size: var(--text-xl); }
   .calc-mast .eyebrow { margin-bottom: var(--space-sm); }
+  .calc-season { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; margin: var(--space-md) 0 0; padding: 0; border: 0; }
+  .calc-season .calc-chip--season > span { min-width: min(11.5rem, 42vw); min-height: 64px; padding: .5rem 1.2em; border-radius: 999px; font-size: var(--text-base); }
   .calc-mast__lead { margin-top: var(--space-xs); max-width: 52ch; color: var(--stone); font-size: var(--text-sm); letter-spacing: 0.01em; }
   .calc-sample {
     margin-top: var(--space-md); max-width: 60ch; line-height: 1.5; padding: .6em 1.2em; border: 1px dashed var(--taupe); border-radius: var(--radius);
@@ -819,7 +844,7 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
   /* ---- print: a clean one-page estimate ---- */
   @media print {
     @page { margin: 16mm; }
-    .site-header, .site-footer, .skip-link, .calc-steps, .calc-bar, .calc-actions, .calc-foot, .calc-compare, .calc-sample, .calc-mast__lead, .calc-mast .eyebrow { display: none !important; }
+    .site-header, .site-footer, .skip-link, .calc-steps, .calc-bar, .calc-actions, .calc-foot, .calc-compare, .calc-sample, .calc-season, .calc-mast__lead, .calc-mast .eyebrow { display: none !important; }
     body { background: #fff; }
     .calc-page { padding: 0; }
     .calc-mast { padding-bottom: 8mm; }
