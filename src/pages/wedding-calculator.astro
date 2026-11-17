@@ -43,15 +43,6 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
             <span class="calc-step__chev" aria-hidden="true"></span>
           </summary>
           <div class="calc-step__body">
-            <div class="calc-field">
-              <label for="f-date">Wedding date</label>
-              <div class="calc-date">
-                <input type="date" id="f-date" name="date" />
-                <button type="button" class="calc-link" data-clear-date hidden>Clear date</button>
-              </div>
-              <p class="calc-hint" data-out="date-note"></p>
-            </div>
-            <p class="calc-or">No date yet? Choose a year, month and day of the week.</p>
             <fieldset class="calc-field">
               <legend>Year</legend>
               <div class="calc-chips">
@@ -67,6 +58,13 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
                   {MONTHS.map((m, i) => (<option value={i + 1}>{m}</option>))}
                 </select>
               </div>
+            </div>
+            <div class="calc-field">
+              <label for="f-date">Date <span class="calc-opt">Optional</span></label>
+              <div class="calc-select">
+                <select id="f-date" name="date"></select>
+              </div>
+              <p class="calc-hint" data-out="date-note"></p>
             </div>
             <fieldset class="calc-field">
               <legend>Day of the week</legend>
@@ -488,9 +486,25 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
   }
 
   // ---------- render ----------
+  // The date list always matches the chosen month and year, so a date that has no price can never be picked.
+  function buildDates() {
+    const sel = form.elements.namedItem("date") as HTMLSelectElement;
+    const hols = bankHolidays(state.year);
+    const last = new Date(state.year, state.month, 0).getDate();
+    const opts = [new Option("No date yet", "")];
+    for (let n = 1; n <= last; n++) {
+      const d = new Date(state.year, state.month - 1, n);
+      if (d < today) continue;
+      const label = d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+      opts.push(new Option(hols[iso(d)] ? `${label} · bank holiday` : label, iso(d)));
+    }
+    sel.replaceChildren(...opts);
+  }
+
   function syncInputs() {
+    buildDates();
     (form.elements.namedItem("month") as HTMLSelectElement).value = String(state.month);
-    (form.elements.namedItem("date") as HTMLInputElement).value = state.date;
+    (form.elements.namedItem("date") as HTMLSelectElement).value = state.date;
     (form.elements.namedItem("holiday") as HTMLInputElement).checked = state.holiday;
     for (const k of ["day", "evening"]) (form.elements.namedItem(k) as HTMLInputElement).value = String(state[k]);
     for (const k of ["year", "dayType", "menu", "eveFood", "drinks", "plan"])
@@ -498,7 +512,6 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
     form.querySelectorAll<HTMLInputElement>('input[name="extras"]').forEach((el) => (el.checked = state.extras.includes(el.value)));
     (form.elements.namedItem("couple") as HTMLInputElement).value = state.couple;
     (form.elements.namedItem("coordinator") as HTMLInputElement).value = state.coordinator;
-    form.querySelector<HTMLElement>("[data-clear-date]")!.hidden = !state.date;
   }
 
   function render() {
@@ -527,7 +540,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
 
     const exact = state.date ? parseDate(state.date) : null;
     const when = exact ? `${exact.toLocaleDateString("en-GB", { weekday: "long" })} ${longDate(exact)}` : `${r.when} · ${MONTHS[state.month - 1]} ${state.year}`;
-    $("date-note").textContent = exact ? `${when}. ${season.label}.` : "Pick a date and the year, month and day are filled in for you.";
+    $("date-note").textContent = exact ? `${when}. ${season.label}.` : "Choose a date and the day of the week is set for you.";
     $("s-date").textContent = when;
     $("hire-label").textContent = r.baseLabel;
     $("hire-inline").textContent = r.priced ? pounds(r.base) : "to be confirmed";
@@ -623,9 +636,6 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
 
   // ---------- events ----------
   const panels = [...form.querySelectorAll<HTMLDetailsElement>("details.calc-step")];
-  const dateInput = form.elements.namedItem("date") as HTMLInputElement;
-  dateInput.min = iso(today > new Date(years[0], 0, 1) ? today : new Date(years[0], 0, 1));
-  dateInput.max = `${years[years.length - 1]}-12-31`;
 
   form.addEventListener("change", (e) => {
     const t = e.target as HTMLInputElement;
@@ -653,15 +663,13 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
   form.addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.target as HTMLElement).matches("input[type=text], input[type=number]")) e.preventDefault(); });
 
   form.addEventListener("click", (e) => {
-    const el = (e.target as HTMLElement).closest<HTMLElement>("[data-step],[data-next],[data-clear-date]");
+    const el = (e.target as HTMLElement).closest<HTMLElement>("[data-step],[data-next]");
     if (!el) return;
     if (el.dataset.step) {
       const k = el.dataset.step; const jump = 5;
       const cur = state[k]; const dir = Number(el.dataset.dir);
       state[k] = dir > 0 ? Math.floor(cur / jump) * jump + jump : Math.ceil(cur / jump) * jump - jump;
       clampGuests(); syncInputs(); render();
-    } else if (el.hasAttribute("data-clear-date")) {
-      state.date = ""; syncInputs(); render();
     }
     else if (el.hasAttribute("data-next")) {
       const cur = el.closest("details")!; let next = cur.nextElementSibling as HTMLDetailsElement | null;
@@ -772,7 +780,6 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
   .calc-field > legend { margin-bottom: .6rem; }
   .calc-opt { color: var(--taupe); font-size: var(--text-xs); margin-left: .35em; }
   .calc-hint { font-size: var(--text-xs); color: var(--stone); line-height: 1.5; }
-  .calc-or { padding-top: 1.2rem; border-top: 1px dashed var(--hairline); font-size: var(--text-sm); color: var(--stone); }
 
   .calc-chips { display: flex; flex-wrap: wrap; gap: .5rem; }
   .calc-chip { position: relative; cursor: pointer; }
