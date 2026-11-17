@@ -9,11 +9,14 @@ interface Props {
   title?: string;
   description?: string;
   showFloatingCta?: boolean;
+  /** A page that stands on its own: no site navigation, no footer, and hidden from search engines. */
+  standalone?: boolean;
 }
 const {
   title = "Styal Lodge — Wedding Venue, Cheshire",
   description = "A family-run wedding venue in Cheshire. Beautiful weddings, exceptional food, effortless planning.",
   showFloatingCta = true,
+  standalone = false,
 } = Astro.props;
 ---
 <!doctype html>
@@ -24,17 +27,18 @@ const {
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="theme-color" content="#F4F1EA" />
+    {standalone && <meta name="robots" content="noindex, nofollow" />}
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <!-- Larken via Adobe Fonts (web project shu6iux) -->
     <link rel="stylesheet" href="https://use.typekit.net/shu6iux.css" />
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
-    <Nav />
+    {!standalone && <Nav />}
     <main id="main">
       <slot />
     </main>
-    <Footer />
-    {showFloatingCta && <FloatingCta />}
+    {!standalone && <Footer />}
+    {!standalone && showFloatingCta && <FloatingCta />}
   </body>
 </html>

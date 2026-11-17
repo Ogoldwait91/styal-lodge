@@ -9,21 +9,24 @@ import pricing from "../data/pricing.json";
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const fmt = (n: number) => "£" + (Number.isInteger(n) ? n.toLocaleString("en-GB") : n.toFixed(2));
-const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touches", "Payment plan"];
-const pending = (k: string) => pricing.pendingSections.includes(k);
-const SEPARATE = "Priced separately. Your coordinator will take you through the options and prices.";
+const steps = ["Your date", "Your guests", "Payment plan"];
+// While the rest of the site is unfinished the calculator stands alone: no menu, no footer, no links out.
+// Set this to false to put it back inside the site once the site is ready.
+const STANDALONE = true;
+const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between, so the step is hidden
 ---
 <Base
   title="Wedding calculator — Styal Lodge"
   description="See venue prices for your date at Styal Lodge and how the payments are spread."
   showFloatingCta={false}
+  standalone={STANDALONE}
 >
-  <div class="calc-page">
+  <div class:list={["calc-page", STANDALONE && "calc-page--standalone"]}>
     <header class="calc-mast container">
       <img class="calc-mast__logo" src="/logo-dark.svg" width="971" height="617" alt="Styal Lodge — Wedding Venue, Cheshire" data-hero-wordmark />
       <p class="eyebrow">Plan your day</p>
       <h1 class="display">Wedding <em>calculator</em></h1>
-      <p class="calc-mast__lead">Choose your date and guests to see the price for your day and how the payments are spread.</p>
+      <p class="calc-mast__lead">Choose your date and guest numbers to see the price for your day.</p>
     </header>
 
     <div class="calc container">
@@ -54,11 +57,18 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
                 </select>
               </div>
             </div>
+            <div class="calc-field">
+              <label for="f-date">Date <span class="calc-opt">Optional</span></label>
+              <div class="calc-select">
+                <select id="f-date" name="date"></select>
+              </div>
+              <p class="calc-hint" data-out="date-note"></p>
+            </div>
             <fieldset class="calc-field">
               <legend>Day of the week</legend>
               <div class="calc-chips">
                 {pricing.dayTypes.map((d) => (
-                  <label class="calc-chip"><input type="radio" name="dayType" value={d.id} /><span>{d.short}</span></label>
+                  <label class="calc-chip calc-chip--priced"><input type="radio" name="dayType" value={d.id} /><span><span>{d.short}</span><small data-chip-price={d.id}></small></span></label>
                 ))}
               </div>
             </fieldset>
@@ -70,22 +80,13 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
                 <span class="calc-check__note" data-out="holiday-note"></span>
               </span>
             </label>
-            <div class="calc-field calc-field--quiet">
-              <label for="f-date">Already have a date in mind? <span class="calc-opt">Optional</span></label>
-              <div class="calc-date">
-                <button type="button" class="calc-next calc-next--small" data-pick-date>Choose a date</button>
-                <input type="date" id="f-date" name="date" hidden />
-                <button type="button" class="calc-link" data-clear-date hidden>Clear date</button>
-              </div>
-              <p class="calc-hint">Choosing a date fills in the year, month and day, and puts real dates on your payment plan.</p>
-            </div>
             <p class="calc-price-line"><span data-out="hire-label"></span> <strong data-out="hire-inline"></strong> <span data-out="season-inline"></span></p>
-            <button type="button" class="calc-next" data-next>Next: {steps[1]}</button>
+            <button type="button" class="calc-next" data-next></button>
           </div>
         </details>
 
-        <!-- 2. Guests -->
-        <details class="calc-step" name="calc-step">
+        <!-- 2. Guests (hidden when guest numbers do not change the price) -->
+        <details class="calc-step" name="calc-step" data-guests>
           <summary>
             <span class="calc-step__num" aria-hidden="true"></span>
             <span class="calc-step__title">{steps[1]}</span>
@@ -94,10 +95,10 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
           </summary>
           <div class="calc-step__body">
             {[
-              { id: "day", label: "Day guests", hint: "Ceremony, wedding breakfast and evening" },
-              { id: "evening", label: "Evening-only guests", hint: "Joining for the party" },
+              { id: "day", label: "Day guests", hint: "Ceremony, wedding breakfast and evening", mode: undefined },
+              { id: "evening", label: "Evening-only guests", hint: "Joining for the party", mode: "winter" },
             ].map((g) => (
-              <div class="calc-stepper">
+              <div class="calc-stepper" data-mode={g.mode}>
                 <div>
                   <label for={`f-${g.id}`}>{g.label}</label>
                   <p class="calc-hint">{g.hint}</p>
@@ -110,109 +111,15 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
               </div>
             ))}
             <p class="calc-hint" data-out="guest-note"></p>
-            <button type="button" class="calc-next" data-next>Next: {steps[2]}</button>
-          </div>
-        </details>
-
-        <!-- 3. Feasting -->
-        <details class="calc-step" name="calc-step">
-          <summary>
-            <span class="calc-step__num" aria-hidden="true"></span>
-            <span class="calc-step__title">{steps[2]}</span>
-            <span class="calc-step__value" data-out="s-food"></span>
-            <span class="calc-step__chev" aria-hidden="true"></span>
-          </summary>
-          <div class="calc-step__body">
-            <p class="calc-included" data-mode="winter">Included in your winter collection. {pricing.winter.includes}</p>
-            {pending("feasting") && <p class="calc-included" data-mode="summer">{SEPARATE}</p>}
-            <fieldset class="calc-field" data-mode="summer" hidden={pending("feasting")} data-pending={pending("feasting") ? "" : undefined}>
-              <legend>Wedding breakfast</legend>
-              <div class="calc-cards">
-                {pricing.menus.map((m) => (
-                  <label class="calc-card">
-                    <input type="radio" name="menu" value={m.id} />
-                    <span class="calc-card__name">{m.name}</span>
-                    <span class="calc-card__blurb">{m.blurb}</span>
-                    <span class="calc-card__price"><span data-price={m.perHead}>{fmt(m.perHead)}</span> per guest</span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-            <fieldset class="calc-field" data-mode="summer" hidden={pending("feasting")} data-pending={pending("feasting") ? "" : undefined}>
-              <legend>Evening food</legend>
-              <div class="calc-cards calc-cards--slim">
-                {pricing.eveningFood.map((m) => (
-                  <label class="calc-card">
-                    <input type="radio" name="eveFood" value={m.id} />
-                    <span class="calc-card__name">{m.name}</span>
-                    {m.perHead > 0 && <span class="calc-card__price"><span data-price={m.perHead}>{fmt(m.perHead)}</span> per guest</span>}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-            <button type="button" class="calc-next" data-next>Next: {steps[3]}</button>
-          </div>
-        </details>
-
-        <!-- 4. Drinks -->
-        <details class="calc-step" name="calc-step">
-          <summary>
-            <span class="calc-step__num" aria-hidden="true"></span>
-            <span class="calc-step__title">{steps[3]}</span>
-            <span class="calc-step__value" data-out="s-drinks"></span>
-            <span class="calc-step__chev" aria-hidden="true"></span>
-          </summary>
-          <div class="calc-step__body">
-            <p class="calc-included" data-mode="winter">Drinks are included in your winter collection.</p>
-            {pending("drinks") && <p class="calc-included" data-mode="summer">{SEPARATE}</p>}
-            <fieldset class="calc-field" data-mode="summer" hidden={pending("drinks")} data-pending={pending("drinks") ? "" : undefined}>
-              <legend class="visually-hidden">Drinks package</legend>
-              <div class="calc-cards calc-cards--slim">
-                {pricing.drinks.map((d) => (
-                  <label class="calc-card">
-                    <input type="radio" name="drinks" value={d.id} />
-                    <span class="calc-card__name">{d.name}</span>
-                    <span class="calc-card__blurb">{d.blurb}</span>
-                    <span class="calc-card__price">{d.perHead > 0 ? (<Fragment><span data-price={d.perHead}>{fmt(d.perHead)}</span> per guest</Fragment>) : "No charge"}</span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-            <button type="button" class="calc-next" data-next>Next: {pending("extras") ? steps[5] : steps[4]}</button>
-          </div>
-        </details>
-
-        <!-- 5. Extras -->
-        <details class="calc-step" name="calc-step" hidden={pending("extras")} data-pending={pending("extras") ? "" : undefined}>
-          <summary>
-            <span class="calc-step__num" aria-hidden="true"></span>
-            <span class="calc-step__title">{steps[4]}</span>
-            <span class="calc-step__value" data-out="s-extras"></span>
-            <span class="calc-step__chev" aria-hidden="true"></span>
-          </summary>
-          <div class="calc-step__body">
-            <div class="calc-checks">
-              {pricing.extras.map((x) => (
-                <label class="calc-check" data-mode={x.summerOnly ? "summer" : undefined}>
-                  <input type="checkbox" name="extras" value={x.id} />
-                  <span class="calc-check__box" aria-hidden="true"></span>
-                  <span class="calc-check__text">
-                    <span class="calc-check__name">{x.name}</span>
-                    <span class="calc-check__note">{x.note}</span>
-                  </span>
-                  <span class="calc-check__price"><span data-price={x.price} data-flat={x.per === "flat" ? "" : undefined}>{fmt(x.price)}</span>{x.per === "dayGuest" ? " per guest" : ""}</span>
-                </label>
-              ))}
-            </div>
-            <button type="button" class="calc-next" data-next>Next: {steps[5]}</button>
+            <button type="button" class="calc-next" data-next></button>
           </div>
         </details>
 
         <!-- 6. Payment plan -->
-        <details class="calc-step" name="calc-step">
+        <details class="calc-step" name="calc-step" hidden={onePlan}>
           <summary>
             <span class="calc-step__num" aria-hidden="true"></span>
-            <span class="calc-step__title">{steps[5]}</span>
+            <span class="calc-step__title">{steps[2]}</span>
             <span class="calc-step__value" data-out="s-plan"></span>
             <span class="calc-step__chev" aria-hidden="true"></span>
           </summary>
@@ -229,14 +136,60 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
                 ))}
               </div>
             </fieldset>
-            <a class="calc-next calc-next--link" href="#estimate">See your estimate</a>
+            <button type="button" class="calc-next" data-next></button>
           </div>
         </details>
+
+        <!-- Your details (optional): personalises the estimate -->
+        <details class="calc-step" name="calc-step">
+          <summary>
+            <span class="calc-step__num" aria-hidden="true"></span>
+            <span class="calc-step__title">Your details</span>
+            <span class="calc-step__value" data-out="s-names"></span>
+            <span class="calc-step__chev" aria-hidden="true"></span>
+          </summary>
+          <div class="calc-step__body">
+            <div class="calc-field">
+              <label for="f-couple">Couple's names <span class="calc-opt">Optional</span></label>
+              <input class="calc-text" type="text" id="f-couple" name="couple" maxlength="80" autocomplete="off" placeholder="For example, Katie and Chris" />
+            </div>
+            <div class="calc-field">
+              <label for="f-coordinator">Your coordinator <span class="calc-opt">Optional</span></label>
+              <input class="calc-text" type="text" id="f-coordinator" name="coordinator" maxlength="60" autocomplete="off" placeholder="Coordinator's name" />
+              <p class="calc-hint">Both names appear on the estimate. The coordinator's name is remembered on this device.</p>
+            </div>
+          </div>
+        </details>
+
+        <p class="calc-note" data-out="season-note"></p>
+
+        <div class="calc-compare" data-compare>
+          <p class="eyebrow">Compare seasons</p>
+          <p class="calc-compare__text" data-out="compare"></p>
+          <button type="button" class="calc-link" data-switch></button>
+        </div>
+
+        <!-- The end of the form: a clear finishing step -->
+        <div class="calc-finish" data-finish>
+          <div class="calc-finish__todo">
+            <button type="button" class="btn btn--solid calc-finish__btn" data-finish-btn>Finish estimate</button>
+            <p class="calc-hint">You can still change anything afterwards.</p>
+          </div>
+          <div class="calc-finish__done" hidden>
+            <p class="calc-finish__title">Your estimate is ready<span data-out="done-for"></span>.</p>
+            <p class="calc-hint">Tap any section above to change it. The estimate updates straight away.</p>
+            <div class="calc-finish__actions">
+              <button type="button" class="btn btn--solid" data-print>Print or save as PDF</button>
+              <button type="button" class="btn btn--ghost" data-reset>Start a new estimate</button>
+            </div>
+          </div>
+        </div>
       </form>
 
       <!-- Estimate -->
       <aside class="calc-summary" id="estimate" aria-live="polite">
-        <p class="eyebrow">Your estimate</p>
+        <p class="eyebrow" data-out="heading">Your estimate</p>
+        <p class="calc-summary__for" data-out="for"></p>
         <p class="calc-summary__total" data-out="total"></p>
         <p class="calc-summary__per" data-out="per-guest"></p>
         <p class="calc-summary__scope" data-out="scope"></p>
@@ -245,15 +198,19 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
         <dl class="calc-lines" data-out="lines"></dl>
 
         <div class="calc-plan">
-          <p class="eyebrow">Payment plan · <span data-out="plan-name"></span></p>
+          <p class="eyebrow">{onePlan ? "Payments" : (<Fragment>Payment plan · <span data-out="plan-name"></span></Fragment>)}</p>
+          {onePlan && <span data-out="plan-name" hidden></span>}
           <ol class="calc-schedule" data-out="schedule"></ol>
           <p class="calc-hint" data-out="plan-note"></p>
         </div>
 
         <div class="calc-actions">
-          <a class="btn btn--solid" href="/book-a-visit">Book a visit</a>
-          <button type="button" class="btn btn--ghost" data-print>Print or save as PDF</button>
-          <button type="button" class="calc-link" data-copy>Copy a link to this estimate</button>
+          {!STANDALONE && <a class="btn btn--solid" href="/book-a-visit">Book a visit</a>}
+          <button type="button" class:list={["btn", STANDALONE ? "btn--solid calc-actions__wide" : "btn--ghost"]} data-print>Print or save as PDF</button>
+          <div class="calc-actions__links">
+            <button type="button" class="calc-link" data-copy>Copy a link to this estimate</button>
+            <button type="button" class="calc-link" data-reset>Start again</button>
+          </div>
         </div>
 
         <p class="calc-smallprint">
@@ -264,9 +221,11 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
       </aside>
     </div>
 
+    {STANDALONE && <p class="calc-foot container">Styal Lodge · Station Road, Styal, Cheshire SK9 4JN</p>}
+
     <!-- Phone: running total pinned to the bottom -->
     <a class="calc-bar" href="#estimate" data-bar>
-      <span class="calc-bar__label">Your estimate</span>
+      <span class="calc-bar__label" data-out="bar-label">Your estimate</span>
       <span class="calc-bar__total" data-out="bar-total"></span>
       <span class="calc-bar__go">View</span>
     </a>
@@ -287,7 +246,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
   const monthYear = (d: Date) => d.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
   const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  const PENDING = new Set<string>(P.pendingSections);
+  const FEAST = P.summer.feasting;   // summer catering, priced per day guest
 
   // ---------- state ----------
   const years: number[] = P.years;
@@ -295,9 +254,13 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
   const state: any = {
     date: "", year: firstYear, month: 6, dayType: "sat", holiday: false,
     day: P.guests.defaultDay, evening: P.guests.defaultEvening,
-    menu: P.menus[0].id, eveFood: P.eveningFood[0].id, drinks: P.drinks[1]?.id ?? P.drinks[0].id,
-    extras: [] as string[], plan: P.payment.plans[0].id,
+    plan: P.payment.plans[0].id,
+    couple: "", coordinator: "",
   };
+  const DEFAULTS = JSON.parse(JSON.stringify(state));
+  let finished = false;
+  const clean = (v: string | null, max: number) => (v ?? "").replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, max);
+  try { state.coordinator = clean(localStorage.getItem("styal-calc-coordinator"), 60); } catch { /* storage unavailable: nothing to remember */ }
 
   // restore from a shared link
   const q = new URLSearchParams(location.search);
@@ -309,14 +272,32 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
   for (const [key, param] of [["day", "g"], ["evening", "e"]] as const) {
     const v = q.get(param); if (v !== null && /^\d{1,3}$/.test(v)) state[key] = +v;
   }
-  if (has(P.menus, q.get("menu"))) state.menu = q.get("menu");
-  if (has(P.eveningFood, q.get("eve"))) state.eveFood = q.get("eve");
-  if (has(P.drinks, q.get("dr"))) state.drinks = q.get("dr");
   if (has(P.payment.plans, q.get("plan"))) state.plan = q.get("plan");
-  if (q.get("x")) state.extras = q.get("x")!.split(".").filter((id) => has(P.extras, id));
   if (q.get("date") && /^\d{4}-\d{2}-\d{2}$/.test(q.get("date")!)) state.date = q.get("date");
+  if (q.get("for")) state.couple = clean(q.get("for"), 80);
+  if (q.get("by")) state.coordinator = clean(q.get("by"), 60);
 
   // ---------- helpers ----------
+  // Bank holidays in England, worked out for any year (one-off extra holidays are not included).
+  function bankHolidays(year: number): Record<string, string> {
+    const out: Record<string, string> = {};
+    const add = (d: Date, name: string) => (out[iso(d)] = name);
+    const shift = (d: Date, n: number) => { const r = new Date(d); r.setDate(r.getDate() + n); return r; };
+    const firstMon = (m: number) => { const d = new Date(year, m, 1); return shift(d, (8 - d.getDay()) % 7); };
+    const lastMon = (m: number) => { const d = new Date(year, m + 1, 0); return shift(d, -((d.getDay() + 6) % 7)); };
+    const ny = new Date(year, 0, 1); add(ny.getDay() === 6 ? shift(ny, 2) : ny.getDay() === 0 ? shift(ny, 1) : ny, "New Year's Day");
+    const a = year % 19, b = Math.floor(year / 100), c = year % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3);
+    const h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const easter = new Date(year, Math.floor((h + l - 7 * m + 114) / 31) - 1, ((h + l - 7 * m + 114) % 31) + 1);
+    add(shift(easter, -2), "Good Friday"); add(shift(easter, 1), "Easter Monday");
+    add(firstMon(4), "the early May bank holiday"); add(lastMon(4), "the spring bank holiday"); add(lastMon(7), "the summer bank holiday");
+    const xmas = new Date(year, 11, 25), wd = xmas.getDay();
+    add(wd === 6 || wd === 0 ? shift(xmas, 2) : xmas, "Christmas Day");
+    add(wd === 5 || wd === 6 ? shift(xmas, 3) : shift(xmas, 1), "Boxing Day");
+    return out;
+  }
+  const holidayName = (dateIso: string) => (dateIso ? bankHolidays(Number(dateIso.slice(0, 4)))[dateIso] ?? "" : "");
+
   const isWinter = () => P.winter.months.includes(state.month);
   const parseDate = (s: string) => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
   const addMonths = (d: Date, n: number) => { const r = new Date(d); const day = r.getDate(); r.setDate(1); r.setMonth(r.getMonth() + n); r.setDate(Math.min(day, new Date(r.getFullYear(), r.getMonth() + 1, 0).getDate())); return r; };
@@ -327,6 +308,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
     if (isNaN(d.getTime()) || !years.includes(d.getFullYear()) || d < today) { state.date = ""; return; }
     state.year = d.getFullYear(); state.month = d.getMonth() + 1;
     state.dayType = P.dayTypes.find((t: any) => t.days.includes(d.getDay()))?.id ?? state.dayType;
+    state.holiday = !!holidayName(state.date);   // an exact date knows whether it is a bank holiday
   }
 
   function clampGuests() {
@@ -336,15 +318,13 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
   }
 
   // ---------- calculation ----------
-  function calculate() {
-    const winter = isWinter();
-    const dayType = P.dayTypes.find((t: any) => t.id === state.dayType);
-    const eveningTotal = state.day + state.evening;
-    const menu = P.menus.find((m: any) => m.id === state.menu);
-    const eve = P.eveningFood.find((m: any) => m.id === state.eveFood);
-    const drinks = P.drinks.find((m: any) => m.id === state.drinks);
+  function calculate(month: number = state.month, opts: { dayType?: string; holiday?: boolean } = {}) {
+    const winter = P.winter.months.includes(month);
+    const useDay = opts.dayType ?? state.dayType;
+    const useHoliday = opts.holiday ?? state.holiday;
+    const dayType = P.dayTypes.find((t: any) => t.id === useDay);
     const lines: { label: string; detail: string; amount: number }[] = [];
-    const when = state.holiday ? "Bank holiday" : dayType.short;
+    const when = useHoliday ? "Bank holiday" : dayType.short;
     let base = 0; let baseLabel = ""; let priced = true;
 
     if (winter) {
@@ -352,7 +332,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
       baseLabel = `Winter collection for ${P.winter.includedGuests} guests`;
       if (!c) priced = false;
       else {
-        const peak = state.holiday || P.winter.peakDays.includes(state.dayType);
+        const peak = useHoliday || P.winter.peakDays.includes(useDay);
         base = peak ? c.peak : c.offPeak;
         lines.push({ label: baseLabel, detail: `${when}, ${state.year}. Food, drinks and styling included`, amount: base });
         const extra = Math.max(0, state.day - P.winter.includedGuests);
@@ -364,21 +344,14 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
       baseLabel = "Exclusive use of the Lodge";
       if (!table) priced = false;
       else {
-        base = table[state.holiday ? P.summer.holidayRate : state.dayType];
+        base = table[useHoliday ? P.summer.holidayRate : useDay];
         lines.push({ label: baseLabel, detail: `${when}, ${P.summer.label.toLowerCase().replace("styal", "Styal")} ${state.year}`, amount: base });
-        if (!PENDING.has("feasting")) lines.push({ label: `${menu.name} menu`, detail: `${plural(state.day, "guest", "guests")} at ${money(menu.perHead)}`, amount: state.day * menu.perHead });
-        if (!PENDING.has("feasting") && eve.perHead > 0) lines.push({ label: eve.name, detail: `${plural(eveningTotal, "guest", "guests")} at ${money(eve.perHead)}`, amount: eveningTotal * eve.perHead });
-        if (!PENDING.has("drinks") && drinks.perHead > 0) lines.push({ label: `${drinks.name} drinks`, detail: `${plural(state.day, "guest", "guests")} at ${money(drinks.perHead)}`, amount: state.day * drinks.perHead });
+        if (FEAST) lines.push({ label: FEAST.name, detail: `${plural(state.day, "guest", "guests")} at ${money(FEAST.perGuest)}. ${FEAST.includes}`, amount: state.day * FEAST.perGuest });
       }
-    }
-    if (priced && !PENDING.has("extras")) for (const id of state.extras) {
-      const x = P.extras.find((e: any) => e.id === id); if (!x || (winter && x.summerOnly)) continue;
-      if (x.per === "dayGuest") lines.push({ label: x.name, detail: `${plural(state.day, "guest", "guests")} at ${money(x.price)}`, amount: state.day * x.price });
-      else lines.push({ label: x.name, detail: "", amount: x.price });
     }
     lines.forEach((l) => (l.amount = Math.round(l.amount)));   // whole pounds, so the lines always add up to the total
     const total = lines.reduce((s, l) => s + l.amount, 0);
-    return { winter, dayType, eveningTotal, menu, eve, drinks, lines, total, base, baseLabel, priced, when };
+    return { winter, dayType, lines, total, base, baseLabel, priced, when };
   }
 
   function schedule(total: number) {
@@ -392,7 +365,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
     let paid = 0;
     plan.steps.forEach((s: any, i: number) => {
       const last = i === plan.steps.length - 1;
-      const amount = last ? Math.round(total) - paid : Math.round(total * s.share);
+      const amount = last ? Math.round(total) - paid : Math.min(Math.round(total) - paid, s.amount != null ? s.amount : Math.round(total * s.share));
       if (!last) paid += amount;
       const when = s.when === "booking" ? "When you book" : s.when === "balance" ? balanceWhen : "Date agreed with your coordinator";
       rows.push({ label: s.label, when, amount: pounds(amount) });
@@ -401,46 +374,82 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
   }
 
   // ---------- render ----------
+  // The date list always matches the chosen month and year, so a date that has no price can never be picked.
+  function buildDates() {
+    const sel = form.elements.namedItem("date") as HTMLSelectElement;
+    const hols = bankHolidays(state.year);
+    const last = new Date(state.year, state.month, 0).getDate();
+    const opts = [new Option("No date yet", "")];
+    for (let n = 1; n <= last; n++) {
+      const d = new Date(state.year, state.month - 1, n);
+      if (d < today) continue;
+      const label = d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+      opts.push(new Option(hols[iso(d)] ? `${label} · bank holiday` : label, iso(d)));
+    }
+    sel.replaceChildren(...opts);
+  }
+
   function syncInputs() {
+    buildDates();
     (form.elements.namedItem("month") as HTMLSelectElement).value = String(state.month);
-    (form.elements.namedItem("date") as HTMLInputElement).value = state.date;
+    (form.elements.namedItem("date") as HTMLSelectElement).value = state.date;
     (form.elements.namedItem("holiday") as HTMLInputElement).checked = state.holiday;
     for (const k of ["day", "evening"]) (form.elements.namedItem(k) as HTMLInputElement).value = String(state[k]);
-    for (const k of ["year", "dayType", "menu", "eveFood", "drinks", "plan"])
+    for (const k of ["year", "dayType", "plan"])
       form.querySelectorAll<HTMLInputElement>(`input[name="${k}"]`).forEach((el) => (el.checked = el.value === String(state[k])));
-    form.querySelectorAll<HTMLInputElement>('input[name="extras"]').forEach((el) => (el.checked = state.extras.includes(el.value)));
-    form.querySelector<HTMLElement>("[data-clear-date]")!.hidden = !state.date;
-    if (state.date) { dateInput.hidden = false; form.querySelector<HTMLElement>("[data-pick-date]")!.hidden = true; }
+    (form.elements.namedItem("couple") as HTMLInputElement).value = state.couple;
+    (form.elements.namedItem("coordinator") as HTMLInputElement).value = state.coordinator;
   }
 
   function render() {
     const r = calculate();
     const g = P.guests;
     const season = r.winter ? P.winter : P.summer;
+    const hireOnly = !r.winter && !FEAST;   // summer with no catering price: the figure is the building only
+    const summerFeast = !r.winter && !!FEAST;
+    // guest numbers only matter where they change the price
+    const guestStep = form.querySelector<HTMLDetailsElement>("details[data-guests]")!;
+    if (hireOnly && guestStep.open) guestStep.open = false;
+    guestStep.hidden = hireOnly;
 
+    // each day button carries its own price, so days can be compared at a glance
+    document.querySelectorAll<HTMLElement>("[data-chip-price]").forEach((el) => {
+      const alt = calculate(state.month, { dayType: el.dataset.chipPrice, holiday: false });
+      el.textContent = alt.priced ? pounds(alt.base) : "TBC";
+    });
     // show the sections that apply to this season
-    document.querySelectorAll<HTMLElement>("[data-mode]").forEach((el) => (el.hidden = el.hasAttribute("data-pending") || el.dataset.mode !== (r.winter ? "winter" : "summer")));
+    document.querySelectorAll<HTMLElement>("[data-mode]").forEach((el) => (el.hidden = el.dataset.mode !== (r.winter ? "winter" : "summer")));
 
-    const when = state.date ? longDate(parseDate(state.date)) : `${r.when} · ${MONTHS[state.month - 1]} ${state.year}`;
+    const exact = state.date ? parseDate(state.date) : null;
+    const when = exact ? `${exact.toLocaleDateString("en-GB", { weekday: "long" })} ${longDate(exact)}` : `${r.when} · ${MONTHS[state.month - 1]} ${state.year}`;
+    $("date-note").textContent = exact ? `${when}. ${season.label}.` : "Choose a date and the day of the week is set for you.";
     $("s-date").textContent = when;
     $("hire-label").textContent = r.baseLabel;
     $("hire-inline").textContent = r.priced ? pounds(r.base) : "to be confirmed";
     $("season-inline").textContent = `(${season.label})`;
-    $("holiday-note").textContent = r.winter ? "Charged at the Friday to Sunday rate" : "Charged at the Saturday rate";
-    $("s-guests").textContent = `${state.day} day · ${r.eveningTotal} evening`;
+    const hol = holidayName(state.date);
+    $("holiday-note").textContent = (hol && state.holiday ? `${longDate(parseDate(state.date))} is ${hol}. ` : "") + (r.winter ? "Charged at the Friday to Sunday rate" : "Charged at the Saturday rate");
+    $("s-guests").textContent = state.evening && r.winter ? `${state.day} day · ${state.evening} evening-only` : `${plural(state.day, "day guest", "day guests")}`;
     $("guest-note").textContent = `The Lodge welcomes up to ${g.maxDay} guests for the wedding breakfast and ${g.maxEveningTotal} in the evening.` +
-      (r.winter ? ` The winter collection is priced for ${P.winter.includedGuests} guests, with additional guests charged separately.` : "");
-    $("s-food").textContent = r.winter ? "Included" : PENDING.has("feasting") ? "Priced separately" : (r.eve.perHead > 0 ? `${r.menu.name} · ${r.eve.name}` : r.menu.name);
-    $("s-drinks").textContent = r.winter ? "Included" : PENDING.has("drinks") ? "Priced separately" : r.drinks.name;
-    const hireOnly = !r.winter && (PENDING.has("feasting") || PENDING.has("drinks"));
-    $("scope").textContent = !r.priced ? "" : hireOnly ? "Venue hire only. Catering, drinks, styling and other wedding services are priced separately."
-      : r.winter ? "Food, drinks, essential wedding styling and dedicated coordination are included." : "";
-    const chosen = state.extras.filter((id: string) => { const x = P.extras.find((e: any) => e.id === id); return x && !(r.winter && x.summerOnly); });
-    $("s-extras").textContent = chosen.length ? plural(chosen.length, "extra", "extras") : "None chosen";
+      (summerFeast ? ` Feasting is ${money(FEAST.perGuest)} per guest.` : "") +
+      (r.winter && r.priced ? ` The winter collection is priced for ${P.winter.includedGuests} guests. Each additional day guest is ${money(P.winter.collection[String(state.year)].extraDayGuest)} and each evening-only guest is ${money(P.winter.collection[String(state.year)].eveningGuest)}.` : "");
+    $("season-note").textContent = r.winter
+      ? "Included in the winter collection: food, drinks, essential wedding styling and dedicated coordination."
+      : hireOnly ? `Guest numbers do not change the venue hire price. The Lodge welcomes up to ${g.maxDay} guests for the wedding breakfast and ${g.maxEveningTotal} in the evening.`
+      : `Feasting is with Follow the Smoke. Four ways to feast: ${FEAST.styles.join(", ")}. ${FEAST.includes}.`;
+    $("s-names").textContent = state.couple || "Optional";
+    $("for").textContent = state.couple ? `For ${state.couple}` : "";
+    $("done-for").textContent = state.couple ? ` for ${state.couple}` : "";
+    $("scope").textContent = !r.priced ? "" : hireOnly ? "Catering, drinks and styling are not included in this figure. They are priced separately."
+      : summerFeast ? "Drinks are not included in this figure. All alcoholic and non-alcoholic drinks are priced separately, as are styling and other wedding services." : "";
 
     const summary = document.getElementById("estimate")!;
     summary.classList.toggle("is-unpriced", !r.priced);
-    $("context").textContent = `${season.label} · ${when} · ${plural(state.day, "day guest", "day guests")}` + (state.evening ? `, ${state.evening} more in the evening` : "");
+    // in summer the figure is the building only, so the panel says so in its heading, not in small print
+    summary.classList.toggle("is-hire-only", !r.winter && r.priced);
+    const heading = hireOnly ? "Venue hire only" : summerFeast ? "Venue hire and feasting" : "Your estimate";
+    $("heading").textContent = heading; $("bar-label").textContent = heading;
+    $("context").textContent = `${season.label} · ${when}` + (hireOnly ? "" : ` · ${plural(state.day, "day guest", "day guests")}` + (state.evening && r.winter ? `, ${state.evening} more in the evening` : ""));
 
     if (!r.priced) {
       $("total").textContent = "To be confirmed";
@@ -453,7 +462,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
       $("s-plan").textContent = s.plan.name;
       $("total").textContent = pounds(r.total);
       $("bar-total").textContent = pounds(r.total);
-      $("per-guest").textContent = hireOnly ? "" : `About ${pounds(r.total / Math.max(1, state.day))} per day guest`;
+      $("per-guest").textContent = !r.winter ? "" : `About ${pounds(r.total / Math.max(1, state.day))} per day guest`;
       $("lines").replaceChildren(...r.lines.map((l) => {
         const row = document.createElement("div"); row.className = "calc-line";
         const dt = document.createElement("dt"); dt.textContent = l.label;
@@ -471,49 +480,74 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
       }));
       $("plan-note").textContent = s.note;
     }
-    $("prepared").textContent = `Prepared ${longDate(today)}. `;
+    $("prepared").textContent = `Prepared ${longDate(today)}${state.coordinator ? ` by ${state.coordinator}` : ""}. `;
+
+    // compare with the other season, for the same day of the week
+    const alt = calculate(r.winter ? 6 : 11);
+    const wc = P.winter.collection[String(state.year)];
+    $("compare").textContent = r.winter
+      ? (alt.priced ? `In summer (April to September), venue hire for the same day is ${pounds(alt.base)}${FEAST ? `, with feasting at ${money(FEAST.perGuest)} per guest` : ""}. Drinks and styling are priced separately.` : `Summer prices for ${state.year} are yet to be confirmed.`)
+      : (alt.priced ? `In winter (October to March), the same day is ${pounds(alt.base)} for ${P.winter.includedGuests} guests, with food, drinks and styling included. Additional day guests are ${money(wc.extraDayGuest)} each and evening-only guests ${money(wc.eveningGuest)} each.` : `Winter prices for ${state.year} are yet to be confirmed.`);
+    document.querySelector<HTMLElement>("[data-switch]")!.textContent = r.winter ? "Show a summer date" : "Show a winter date";
+
+    // label each Next button with the section it leads to
+    const visible = panels.filter((d) => !d.hidden);
+    visible.forEach((d, i) => {
+      const btn = d.querySelector<HTMLElement>("[data-next]"); if (!btn) return;
+      const next = visible[i + 1];
+      btn.hidden = !next;
+      if (next) btn.textContent = `Next: ${next.querySelector(".calc-step__title")!.textContent}`;
+    });
+    const fin = form.querySelector<HTMLElement>("[data-finish]")!;
+    fin.querySelector<HTMLElement>(".calc-finish__todo")!.hidden = finished;
+    fin.querySelector<HTMLElement>(".calc-finish__done")!.hidden = !finished;
 
     // keep the address bar shareable
     const u = new URLSearchParams();
     u.set("y", state.year); u.set("m", state.month); u.set("d", state.dayType); if (state.holiday) u.set("h", "1");
     u.set("g", state.day); u.set("e", state.evening);
-    u.set("menu", state.menu); u.set("eve", state.eveFood); u.set("dr", state.drinks); u.set("plan", state.plan);
-    if (state.extras.length) u.set("x", state.extras.join("."));
+    u.set("plan", state.plan);
     if (state.date) u.set("date", state.date);
+    if (state.couple) u.set("for", state.couple);
+    if (state.coordinator) u.set("by", state.coordinator);
     history.replaceState(null, "", `${location.pathname}?${u}${location.hash}`);
   }
 
   // ---------- events ----------
-  const dateInput = form.elements.namedItem("date") as HTMLInputElement;
-  dateInput.min = iso(today > new Date(years[0], 0, 1) ? today : new Date(years[0], 0, 1));
-  dateInput.max = `${years[years.length - 1]}-12-31`;
+  const panels = [...form.querySelectorAll<HTMLDetailsElement>("details.calc-step")];
 
   form.addEventListener("change", (e) => {
     const t = e.target as HTMLInputElement;
     if (t.name === "date") { state.date = t.value; applyDate(); }
     else if (t.name === "year" || t.name === "dayType") { state[t.name] = t.name === "year" ? Number(t.value) : t.value; state.date = ""; }
     else if (t.name === "month") { state.month = Number(t.value); state.date = ""; }
-    else if (t.name === "extras") state.extras = [...form.querySelectorAll<HTMLInputElement>('input[name="extras"]:checked')].map((el) => el.value);
     else if (t.name === "holiday") state.holiday = t.checked;
+    else if (t.name === "couple") state.couple = clean(t.value, 80);
+    else if (t.name === "coordinator") {
+      state.coordinator = clean(t.value, 60);
+      try { localStorage.setItem("styal-calc-coordinator", state.coordinator); } catch { /* storage unavailable */ }
+    }
     else if (["day", "evening"].includes(t.name)) { state[t.name] = Number(t.value); clampGuests(); }
     else if (t.name) state[t.name] = t.value;
     syncInputs(); render();
   });
   form.addEventListener("submit", (e) => e.preventDefault());
+  // names show on the estimate as they are typed
+  form.addEventListener("input", (e) => {
+    const t = e.target as HTMLInputElement;
+    if (t.name === "couple") { state.couple = clean(t.value, 80); render(); }
+    else if (t.name === "coordinator") { state.coordinator = clean(t.value, 60); render(); }
+  });
+  form.addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.target as HTMLElement).matches("input[type=text], input[type=number]")) e.preventDefault(); });
 
   form.addEventListener("click", (e) => {
-    const el = (e.target as HTMLElement).closest<HTMLElement>("[data-step],[data-next],[data-clear-date],[data-pick-date]");
+    const el = (e.target as HTMLElement).closest<HTMLElement>("[data-step],[data-next]");
     if (!el) return;
     if (el.dataset.step) {
       const k = el.dataset.step; const jump = 5;
       const cur = state[k]; const dir = Number(el.dataset.dir);
       state[k] = dir > 0 ? Math.floor(cur / jump) * jump + jump : Math.ceil(cur / jump) * jump - jump;
       clampGuests(); syncInputs(); render();
-    } else if (el.hasAttribute("data-clear-date")) {
-      state.date = ""; dateInput.hidden = true; form.querySelector<HTMLElement>("[data-pick-date]")!.hidden = false; syncInputs(); render();
-    } else if (el.hasAttribute("data-pick-date")) {
-      el.hidden = true; dateInput.hidden = false; dateInput.focus();
-      try { (dateInput as any).showPicker?.(); } catch { /* the field is visible and focused, which is enough */ }
     }
     else if (el.hasAttribute("data-next")) {
       const cur = el.closest("details")!; let next = cur.nextElementSibling as HTMLDetailsElement | null;
@@ -523,10 +557,34 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
   });
 
   // one panel open at a time, even where the browser doesn't do it natively
-  const panels = [...form.querySelectorAll<HTMLDetailsElement>("details.calc-step")];
   panels.forEach((d) => d.addEventListener("toggle", () => { if (d.open) panels.forEach((o) => { if (o !== d) o.open = false; }); }));
 
-  document.querySelector("[data-print]")!.addEventListener("click", () => window.print());
+  document.querySelectorAll("[data-print]").forEach((b) => b.addEventListener("click", () => window.print()));
+
+  // Finish: close the sections, confirm on the left, and draw the eye to the estimate
+  form.querySelector("[data-finish-btn]")!.addEventListener("click", () => {
+    finished = true; panels.forEach((d) => (d.open = false)); render();
+    const est = document.getElementById("estimate")!;
+    est.classList.remove("is-ready"); void est.offsetWidth; est.classList.add("is-ready");
+    if (window.matchMedia("(max-width: 64em)").matches) est.scrollIntoView({ behavior: "smooth", block: "start" });
+    else form.querySelector<HTMLElement>("[data-finish]")!.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  });
+
+  // Start again: back to the defaults for the next couple (the coordinator's name stays)
+  document.querySelectorAll("[data-reset]").forEach((b) => b.addEventListener("click", () => {
+    const keep = state.coordinator;
+    Object.assign(state, JSON.parse(JSON.stringify(DEFAULTS)), { coordinator: keep });
+    finished = false;
+    document.getElementById("estimate")!.classList.remove("is-ready");
+    clampGuests(); syncInputs(); panels.forEach((d, i) => (d.open = i === 0)); render();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }));
+
+  // Compare: jump to the other season, keeping the day and guest numbers
+  document.querySelector("[data-switch]")!.addEventListener("click", () => {
+    state.month = P.winter.months.includes(state.month) ? 6 : 11; state.date = "";
+    syncInputs(); render();
+  });
   const copyBtn = document.querySelector<HTMLButtonElement>("[data-copy]")!;
   copyBtn.addEventListener("click", async () => {
     const original = "Copy a link to this estimate";
@@ -549,6 +607,11 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
   /* ============ Wedding calculator ============ */
   .calc-page { padding-bottom: calc(var(--stack-gap) * 1.75); }
   .calc-page :is(label, legend, small, button, input, select, dt, dd, li, .calc-hint, .calc-card__blurb, .calc-card__price, .calc-step__value) { letter-spacing: 0.01em; }
+
+  /* ---- standalone: no site header above, so nothing to offset ---- */
+  .calc-page--standalone { --header-h: 0px; padding-top: clamp(1.5rem, 4vw, 3rem); }
+  .calc-actions__wide { grid-column: 1 / -1; }
+  .calc-foot { margin-top: calc(var(--stack-gap) * 1.2); text-align: center; font-size: var(--text-xs); letter-spacing: 0.04em; color: var(--stone); }
 
   /* ---- masthead ---- */
   .calc-mast { display: grid; justify-items: center; text-align: center; padding-bottom: calc(var(--stack-gap) * .65); }
@@ -595,7 +658,6 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
   .calc-field > legend { margin-bottom: .6rem; }
   .calc-opt { color: var(--taupe); font-size: var(--text-xs); margin-left: .35em; }
   .calc-hint { font-size: var(--text-xs); color: var(--stone); line-height: 1.5; }
-  .calc-field--quiet { padding-top: 1.2rem; border-top: 1px dashed var(--hairline); }
 
   .calc-chips { display: flex; flex-wrap: wrap; gap: .5rem; }
   .calc-chip { position: relative; cursor: pointer; }
@@ -604,6 +666,9 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
     display: inline-flex; align-items: center; min-height: 44px; padding: 0 1.15em; border: 1px solid var(--hairline); border-radius: 999px;
     font-size: var(--text-sm); background: transparent; transition: background-color .25s ease, border-color .25s ease, color .25s ease;
   }
+  .calc-chip--priced > span { flex-direction: column; justify-content: center; align-items: center; gap: .1rem; min-height: 58px; padding: .35rem 1.1em; border-radius: 16px; line-height: 1.2; }
+  .calc-chip--priced > span > span { border: 0; min-height: 0; padding: 0; background: none !important; color: inherit !important; }
+  .calc-chip--priced small { font-size: var(--text-xs); opacity: .8; font-variant-numeric: lining-nums; }
   .calc-chip:hover span { border-color: var(--accent); }
   .calc-chip input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
   .calc-chip input:focus-visible + span, .calc-card:has(input:focus-visible), .calc-check:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 3px; }
@@ -618,7 +683,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
   .calc-date { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; }
   .calc-date input { width: auto; padding-right: 1rem; }
   .calc-select select:hover, .calc-date input:hover { border-color: var(--accent); }
-  .calc-link { background: none; border: 0; padding: 0; font: inherit; font-size: var(--text-xs); color: var(--stone); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+  .calc-link { background: none; border: 0; padding: 0 .5rem; min-height: 44px; display: inline-flex; align-items: center; font: inherit; font-size: var(--text-xs); color: var(--stone); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
   .calc-link:hover { color: var(--accent); }
   .calc-price-line { font-size: var(--text-sm); color: var(--stone); }
   .calc-price-line strong { font-weight: var(--fw-regular); color: var(--ink); font-size: var(--text-base); margin-left: .35em; }
@@ -673,32 +738,55 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
     background: transparent; border: 1px solid var(--ink); border-radius: 999px; transition: background-color .25s ease, color .25s ease;
   }
   .calc-next:hover { background: var(--ink); color: var(--bg); }
-  .calc-next--link { display: none; }
+  .calc-next[hidden] { display: none; }
+  .calc-text { width: 100%; max-width: 26rem; min-height: 46px; padding: 0 1rem; font: inherit; font-size: var(--text-sm); color: var(--ink); background: transparent; border: 1px solid var(--hairline); border-radius: var(--radius); }
+  .calc-text:hover, .calc-text:focus { border-color: var(--accent); outline: none; }
+  .calc-text::placeholder { color: var(--taupe); }
+  .calc-note { padding: 1.1rem .25rem 0; font-size: var(--text-sm); color: var(--stone); line-height: 1.55; letter-spacing: 0.01em; }
+  .calc-note:empty { display: none; }
+  .calc-finish { padding: 1.5rem .25rem 0; }
+  .calc-finish__todo, .calc-finish__done { display: grid; gap: .6rem; justify-items: start; }
+  .calc-finish .btn { border-radius: 999px; letter-spacing: 0.01em; min-height: 50px; padding-inline: 2em; }
+  .calc-finish__title { font-size: var(--text-lg); letter-spacing: -0.01em; line-height: 1.25; }
+  .calc-finish__actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: .4rem; }
+  .calc-finish__done { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius); padding: 1.25rem 1.4rem; }
   .calc-next--small { min-height: 40px; padding: 0 1.2em; border-color: var(--hairline); }
   .calc-next--small:hover { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 
   /* ---- estimate ---- */
-  .calc-summary { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius); padding: clamp(1.5rem, 3vw, 2.25rem); display: grid; gap: .35rem; scroll-margin-top: calc(var(--header-h) + 1rem); }
-  .calc-summary__total { font-size: var(--text-display); line-height: 1; letter-spacing: -0.03em; color: var(--ink-strong); margin-top: .5rem; font-variant-numeric: lining-nums; }
+  .calc-summary { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius); padding: clamp(1.25rem, 2.2vw, 1.75rem); display: grid; gap: .3rem; scroll-margin-top: calc(var(--header-h) + 1rem); }
+  .calc-summary__total { font-size: clamp(2.75rem, 1.9rem + 3vw, 4.25rem); line-height: 1; letter-spacing: -0.03em; color: var(--ink-strong); margin-top: .35rem; font-variant-numeric: lining-nums; }
+  .calc-summary__for { font-size: var(--text-lg); font-style: italic; letter-spacing: 0; line-height: 1.3; margin-top: .25rem; }
+  .calc-summary__for:empty { display: none; }
+  @media (prefers-reduced-motion: no-preference) {
+    .calc-summary.is-ready { animation: calc-ready 1.4s ease 1; }
+    @keyframes calc-ready { 0%, 100% { box-shadow: 0 0 0 0 rgba(123, 133, 115, 0); } 25% { box-shadow: 0 0 0 4px rgba(123, 133, 115, .55); } }
+  }
+  .calc-summary.is-ready { border-color: var(--accent); }
+  .calc-compare { margin: 1.25rem .25rem 0; padding: 1rem 1.15rem .4rem; border: 1px dashed var(--hairline); border-radius: var(--radius); display: grid; gap: .25rem; justify-items: start; }
+  .calc-compare__text { font-size: var(--text-sm); color: var(--ink); line-height: 1.5; }
+  .calc-compare .calc-link { padding-left: 0; min-height: 44px; }
+  .calc-actions__links { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: center; gap: 0 1.25rem; }
   .calc-summary__per { font-size: var(--text-sm); color: var(--stone); }
   .calc-summary__scope { font-size: var(--text-sm); color: var(--stone); line-height: 1.5; }
+  .calc-summary.is-hire-only .calc-summary__scope { font-size: var(--text-base); color: var(--ink-strong); margin-top: .5rem; padding-left: .8rem; border-left: 2px solid var(--accent); }
   .calc-summary__scope:empty, .calc-summary__per:empty { display: none; }
   .calc-summary__context { font-size: var(--text-sm); color: var(--ink); margin-top: .35rem; }
-  .calc-lines { margin-top: 1.25rem; border-top: 1px solid var(--hairline); }
-  .calc-line { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: .7rem 0; border-bottom: 1px solid var(--hairline); }
+  .calc-lines { margin-top: 1rem; border-top: 1px solid var(--hairline); }
+  .calc-line { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: .55rem 0; border-bottom: 1px solid var(--hairline); }
   .calc-line dt { font-size: var(--text-sm); line-height: 1.35; }
   .calc-line dt small, .calc-schedule small { display: block; font-size: var(--text-xs); color: var(--stone); }
   .calc-line dd { font-size: var(--text-sm); white-space: nowrap; font-variant-numeric: tabular-nums lining-nums; }
-  .calc-plan { margin-top: 1.5rem; display: grid; gap: .6rem; }
+  .calc-plan { margin-top: 1.1rem; display: grid; gap: .35rem; }
   .calc-schedule { list-style: none; padding: 0; margin: 0; counter-reset: pay; }
-  .calc-schedule li { counter-increment: pay; display: grid; grid-template-columns: auto 1fr auto; align-items: baseline; gap: .85rem; padding: .7rem 0; border-bottom: 1px solid var(--hairline); }
+  .calc-schedule li { counter-increment: pay; display: grid; grid-template-columns: auto 1fr auto; align-items: baseline; gap: .85rem; padding: .5rem 0; border-bottom: 1px solid var(--hairline); }
   .calc-schedule li::before { content: counter(pay); width: 1.6rem; height: 1.6rem; display: grid; place-items: center; border: 1px solid var(--taupe); border-radius: 50%; font-size: var(--text-xs); color: var(--stone); align-self: center; }
   .calc-schedule__what { font-size: var(--text-sm); line-height: 1.35; }
   .calc-schedule__amt { font-size: var(--text-base); white-space: nowrap; font-variant-numeric: tabular-nums lining-nums; }
-  .calc-actions { margin-top: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+  .calc-actions { margin-top: 1.1rem; display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
   .calc-actions .btn { letter-spacing: 0.01em; padding-inline: 1em; border-radius: 999px; }
-  .calc-actions .calc-link { grid-column: 1 / -1; justify-self: center; margin-top: .35rem; }
-  .calc-smallprint { margin-top: 1.1rem; font-size: var(--text-xs); color: var(--stone); line-height: 1.55; }
+  .calc-actions .calc-link { margin-top: 0; }
+  .calc-smallprint { margin-top: .6rem; font-size: var(--text-xs); color: var(--stone); line-height: 1.55; }
 
   /* ---- phone total bar ---- */
   .calc-bar { display: none; }
@@ -707,7 +795,6 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
   @media (max-width: 64em) {
     .calc { grid-template-columns: 1fr; }
     .calc-summary { position: static; max-height: none; overflow: visible; }
-    .calc-next--link { display: inline-flex; }
     .calc-bar {
       position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: grid; grid-template-columns: 1fr auto auto; align-items: baseline; gap: 1rem;
       padding: .9rem var(--gutter) calc(.9rem + env(safe-area-inset-bottom)); background: var(--surface-dark); color: var(--on-dark); text-decoration: none;
@@ -732,7 +819,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
   /* ---- print: a clean one-page estimate ---- */
   @media print {
     @page { margin: 16mm; }
-    .site-header, .site-footer, .skip-link, .calc-steps, .calc-bar, .calc-actions, .calc-sample, .calc-mast__lead, .calc-mast .eyebrow { display: none !important; }
+    .site-header, .site-footer, .skip-link, .calc-steps, .calc-bar, .calc-actions, .calc-foot, .calc-compare, .calc-sample, .calc-mast__lead, .calc-mast .eyebrow { display: none !important; }
     body { background: #fff; }
     .calc-page { padding: 0; }
     .calc-mast { padding-bottom: 8mm; }
