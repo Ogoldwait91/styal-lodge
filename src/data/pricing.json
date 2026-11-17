@@ -1,10 +1,5 @@
 {
-  "_readme": "All calculator prices live here. Venue hire and the winter collection come from the Styal Lodge 2027-2029 price list (all inclusive of VAT). Sections named in 'pendingSections' have no confirmed prices yet: the page shows them as 'priced separately' and leaves them out of the total. The numbers under menus, eveningFood, drinks and extras are PLACEHOLDERS and are not shown. When real prices are in, correct the numbers and remove the section's name from 'pendingSections'.",
-  "pendingSections": [
-    "feasting",
-    "drinks",
-    "extras"
-  ],
+  "_readme": "All calculator prices live here. Summer venue hire comes from the Styal Lodge 2027-2029 price list, summer feasting from The Styal Guide, and the winter collection from the Styal Lodge pricing guide. All prices include VAT. Drinks are priced separately and are not part of the calculator.",
   "years": [
     2027,
     2028,
@@ -87,6 +82,17 @@
         "sat": 5500,
         "sun": 5250
       }
+    },
+    "feasting": {
+      "name": "Feasting with Follow the Smoke",
+      "perGuest": 65,
+      "includes": "Includes a choice of main course and dessert, plus evening food",
+      "styles": [
+        "Sharing Roast",
+        "Follow the Smoke BBQ",
+        "Formal Plated Dining",
+        "Tapas Sharing"
+      ]
     }
   },
   "winter": {
@@ -127,100 +133,6 @@
     "defaultDay": 50,
     "defaultEvening": 0
   },
-  "menus": [
-    {
-      "id": "seasonal",
-      "name": "Seasonal",
-      "blurb": "Three courses that follow the season.",
-      "perHead": 85
-    },
-    {
-      "id": "fire",
-      "name": "Fire",
-      "blurb": "Cooked over flame and served to the table.",
-      "perHead": 95
-    },
-    {
-      "id": "sharing",
-      "name": "Sharing",
-      "blurb": "Generous boards passed between guests.",
-      "perHead": 90
-    },
-    {
-      "id": "woodfire",
-      "name": "Woodfire Pizza",
-      "blurb": "Relaxed, hand-stretched and wood-fired.",
-      "perHead": 65
-    }
-  ],
-  "eveningFood": [
-    {
-      "id": "none",
-      "name": "No evening food",
-      "perHead": 0
-    },
-    {
-      "id": "pizza",
-      "name": "Evening pizza",
-      "perHead": 14
-    },
-    {
-      "id": "rolls",
-      "name": "Smoked brisket rolls",
-      "perHead": 12
-    }
-  ],
-  "drinks": [
-    {
-      "id": "bar",
-      "name": "Bar only",
-      "blurb": "Guests buy their own drinks at the licensed bar.",
-      "perHead": 0
-    },
-    {
-      "id": "classic",
-      "name": "Classic",
-      "blurb": "Reception drink, wine with the meal and a toast.",
-      "perHead": 32
-    },
-    {
-      "id": "signature",
-      "name": "Signature",
-      "blurb": "Champagne reception, premium wines and a toast.",
-      "perHead": 46
-    }
-  ],
-  "extras": [
-    {
-      "id": "canapes",
-      "name": "Canapés",
-      "note": "Served during garden drinks",
-      "price": 9.5,
-      "per": "dayGuest"
-    },
-    {
-      "id": "styling",
-      "name": "Venue styling",
-      "note": "Florals, candles and table styling",
-      "price": 950,
-      "per": "flat",
-      "summerOnly": true
-    },
-    {
-      "id": "grazing",
-      "name": "Cheese and grazing table",
-      "note": "For the evening",
-      "price": 480,
-      "per": "flat"
-    },
-    {
-      "id": "dessert",
-      "name": "Live-fire dessert station",
-      "note": "Toasted over the coals",
-      "price": 7,
-      "per": "dayGuest"
-    }
-  ],
   "payment": {
     "balanceWeeksBefore": null,
     "note": "Your coordinator will confirm payment dates when you book.",

@@ -9,13 +9,11 @@ import pricing from "../data/pricing.json";
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const fmt = (n: number) => "£" + (Number.isInteger(n) ? n.toLocaleString("en-GB") : n.toFixed(2));
-const steps = ["Your date", "Your guests", "Feasting", "Drinks", "Finishing touches", "Payment plan"];
-const pending = (k: string) => pricing.pendingSections.includes(k);
+const steps = ["Your date", "Your guests", "Payment plan"];
 // While the rest of the site is unfinished the calculator stands alone: no menu, no footer, no links out.
 // Set this to false to put it back inside the site once the site is ready.
 const STANDALONE = true;
 const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between, so the step is hidden
-const SEPARATE = "Priced separately. Your coordinator will take you through the options and prices.";
 ---
 <Base
   title="Wedding calculator — Styal Lodge"
@@ -28,7 +26,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
       <img class="calc-mast__logo" src="/logo-dark.svg" width="971" height="617" alt="Styal Lodge — Wedding Venue, Cheshire" data-hero-wordmark />
       <p class="eyebrow">Plan your day</p>
       <h1 class="display">Wedding <em>calculator</em></h1>
-      <p class="calc-mast__lead">Choose your date to see the price for your day.</p>
+      <p class="calc-mast__lead">Choose your date and guest numbers to see the price for your day.</p>
     </header>
 
     <div class="calc container">
@@ -97,10 +95,10 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
           </summary>
           <div class="calc-step__body">
             {[
-              { id: "day", label: "Day guests", hint: "Ceremony, wedding breakfast and evening" },
-              { id: "evening", label: "Evening-only guests", hint: "Joining for the party" },
+              { id: "day", label: "Day guests", hint: "Ceremony, wedding breakfast and evening", mode: undefined },
+              { id: "evening", label: "Evening-only guests", hint: "Joining for the party", mode: "winter" },
             ].map((g) => (
-              <div class="calc-stepper">
+              <div class="calc-stepper" data-mode={g.mode}>
                 <div>
                   <label for={`f-${g.id}`}>{g.label}</label>
                   <p class="calc-hint">{g.hint}</p>
@@ -117,105 +115,11 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
           </div>
         </details>
 
-        <!-- 3. Feasting -->
-        <details class="calc-step" name="calc-step" data-choice="feasting">
-          <summary>
-            <span class="calc-step__num" aria-hidden="true"></span>
-            <span class="calc-step__title">{steps[2]}</span>
-            <span class="calc-step__value" data-out="s-food"></span>
-            <span class="calc-step__chev" aria-hidden="true"></span>
-          </summary>
-          <div class="calc-step__body">
-            <p class="calc-included" data-mode="winter">Included in your winter collection. {pricing.winter.includes}</p>
-            {pending("feasting") && <p class="calc-included" data-mode="summer">{SEPARATE}</p>}
-            <fieldset class="calc-field" data-mode="summer" hidden={pending("feasting")} data-pending={pending("feasting") ? "" : undefined}>
-              <legend>Wedding breakfast</legend>
-              <div class="calc-cards">
-                {pricing.menus.map((m) => (
-                  <label class="calc-card">
-                    <input type="radio" name="menu" value={m.id} />
-                    <span class="calc-card__name">{m.name}</span>
-                    <span class="calc-card__blurb">{m.blurb}</span>
-                    <span class="calc-card__price"><span data-price={m.perHead}>{fmt(m.perHead)}</span> per guest</span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-            <fieldset class="calc-field" data-mode="summer" hidden={pending("feasting")} data-pending={pending("feasting") ? "" : undefined}>
-              <legend>Evening food</legend>
-              <div class="calc-cards calc-cards--slim">
-                {pricing.eveningFood.map((m) => (
-                  <label class="calc-card">
-                    <input type="radio" name="eveFood" value={m.id} />
-                    <span class="calc-card__name">{m.name}</span>
-                    {m.perHead > 0 && <span class="calc-card__price"><span data-price={m.perHead}>{fmt(m.perHead)}</span> per guest</span>}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-            <button type="button" class="calc-next" data-next></button>
-          </div>
-        </details>
-
-        <!-- 4. Drinks -->
-        <details class="calc-step" name="calc-step" data-choice="drinks">
-          <summary>
-            <span class="calc-step__num" aria-hidden="true"></span>
-            <span class="calc-step__title">{steps[3]}</span>
-            <span class="calc-step__value" data-out="s-drinks"></span>
-            <span class="calc-step__chev" aria-hidden="true"></span>
-          </summary>
-          <div class="calc-step__body">
-            <p class="calc-included" data-mode="winter">Drinks are included in your winter collection.</p>
-            {pending("drinks") && <p class="calc-included" data-mode="summer">{SEPARATE}</p>}
-            <fieldset class="calc-field" data-mode="summer" hidden={pending("drinks")} data-pending={pending("drinks") ? "" : undefined}>
-              <legend class="visually-hidden">Drinks package</legend>
-              <div class="calc-cards calc-cards--slim">
-                {pricing.drinks.map((d) => (
-                  <label class="calc-card">
-                    <input type="radio" name="drinks" value={d.id} />
-                    <span class="calc-card__name">{d.name}</span>
-                    <span class="calc-card__blurb">{d.blurb}</span>
-                    <span class="calc-card__price">{d.perHead > 0 ? (<Fragment><span data-price={d.perHead}>{fmt(d.perHead)}</span> per guest</Fragment>) : "No charge"}</span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-            <button type="button" class="calc-next" data-next></button>
-          </div>
-        </details>
-
-        <!-- 5. Extras -->
-        <details class="calc-step" name="calc-step" hidden={pending("extras")} data-pending={pending("extras") ? "" : undefined}>
-          <summary>
-            <span class="calc-step__num" aria-hidden="true"></span>
-            <span class="calc-step__title">{steps[4]}</span>
-            <span class="calc-step__value" data-out="s-extras"></span>
-            <span class="calc-step__chev" aria-hidden="true"></span>
-          </summary>
-          <div class="calc-step__body">
-            <div class="calc-checks">
-              {pricing.extras.map((x) => (
-                <label class="calc-check" data-mode={x.summerOnly ? "summer" : undefined}>
-                  <input type="checkbox" name="extras" value={x.id} />
-                  <span class="calc-check__box" aria-hidden="true"></span>
-                  <span class="calc-check__text">
-                    <span class="calc-check__name">{x.name}</span>
-                    <span class="calc-check__note">{x.note}</span>
-                  </span>
-                  <span class="calc-check__price"><span data-price={x.price} data-flat={x.per === "flat" ? "" : undefined}>{fmt(x.price)}</span>{x.per === "dayGuest" ? " per guest" : ""}</span>
-                </label>
-              ))}
-            </div>
-            <button type="button" class="calc-next" data-next></button>
-          </div>
-        </details>
-
         <!-- 6. Payment plan -->
         <details class="calc-step" name="calc-step" hidden={onePlan}>
           <summary>
             <span class="calc-step__num" aria-hidden="true"></span>
-            <span class="calc-step__title">{steps[5]}</span>
+            <span class="calc-step__title">{steps[2]}</span>
             <span class="calc-step__value" data-out="s-plan"></span>
             <span class="calc-step__chev" aria-hidden="true"></span>
           </summary>
@@ -342,7 +246,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
   const monthYear = (d: Date) => d.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
   const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  const PENDING = new Set<string>(P.pendingSections);
+  const FEAST = P.summer.feasting;   // summer catering, priced per day guest
 
   // ---------- state ----------
   const years: number[] = P.years;
@@ -350,8 +254,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
   const state: any = {
     date: "", year: firstYear, month: 6, dayType: "sat", holiday: false,
     day: P.guests.defaultDay, evening: P.guests.defaultEvening,
-    menu: P.menus[0].id, eveFood: P.eveningFood[0].id, drinks: P.drinks[1]?.id ?? P.drinks[0].id,
-    extras: [] as string[], plan: P.payment.plans[0].id,
+    plan: P.payment.plans[0].id,
     couple: "", coordinator: "",
   };
   const DEFAULTS = JSON.parse(JSON.stringify(state));
@@ -369,11 +272,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
   for (const [key, param] of [["day", "g"], ["evening", "e"]] as const) {
     const v = q.get(param); if (v !== null && /^\d{1,3}$/.test(v)) state[key] = +v;
   }
-  if (has(P.menus, q.get("menu"))) state.menu = q.get("menu");
-  if (has(P.eveningFood, q.get("eve"))) state.eveFood = q.get("eve");
-  if (has(P.drinks, q.get("dr"))) state.drinks = q.get("dr");
   if (has(P.payment.plans, q.get("plan"))) state.plan = q.get("plan");
-  if (q.get("x")) state.extras = q.get("x")!.split(".").filter((id) => has(P.extras, id));
   if (q.get("date") && /^\d{4}-\d{2}-\d{2}$/.test(q.get("date")!)) state.date = q.get("date");
   if (q.get("for")) state.couple = clean(q.get("for"), 80);
   if (q.get("by")) state.coordinator = clean(q.get("by"), 60);
@@ -424,10 +323,6 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
     const useDay = opts.dayType ?? state.dayType;
     const useHoliday = opts.holiday ?? state.holiday;
     const dayType = P.dayTypes.find((t: any) => t.id === useDay);
-    const eveningTotal = state.day + state.evening;
-    const menu = P.menus.find((m: any) => m.id === state.menu);
-    const eve = P.eveningFood.find((m: any) => m.id === state.eveFood);
-    const drinks = P.drinks.find((m: any) => m.id === state.drinks);
     const lines: { label: string; detail: string; amount: number }[] = [];
     const when = useHoliday ? "Bank holiday" : dayType.short;
     let base = 0; let baseLabel = ""; let priced = true;
@@ -451,19 +346,12 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
       else {
         base = table[useHoliday ? P.summer.holidayRate : useDay];
         lines.push({ label: baseLabel, detail: `${when}, ${P.summer.label.toLowerCase().replace("styal", "Styal")} ${state.year}`, amount: base });
-        if (!PENDING.has("feasting")) lines.push({ label: `${menu.name} menu`, detail: `${plural(state.day, "guest", "guests")} at ${money(menu.perHead)}`, amount: state.day * menu.perHead });
-        if (!PENDING.has("feasting") && eve.perHead > 0) lines.push({ label: eve.name, detail: `${plural(eveningTotal, "guest", "guests")} at ${money(eve.perHead)}`, amount: eveningTotal * eve.perHead });
-        if (!PENDING.has("drinks") && drinks.perHead > 0) lines.push({ label: `${drinks.name} drinks`, detail: `${plural(state.day, "guest", "guests")} at ${money(drinks.perHead)}`, amount: state.day * drinks.perHead });
+        if (FEAST) lines.push({ label: FEAST.name, detail: `${plural(state.day, "guest", "guests")} at ${money(FEAST.perGuest)}. ${FEAST.includes}`, amount: state.day * FEAST.perGuest });
       }
-    }
-    if (priced && !PENDING.has("extras")) for (const id of state.extras) {
-      const x = P.extras.find((e: any) => e.id === id); if (!x || (winter && x.summerOnly)) continue;
-      if (x.per === "dayGuest") lines.push({ label: x.name, detail: `${plural(state.day, "guest", "guests")} at ${money(x.price)}`, amount: state.day * x.price });
-      else lines.push({ label: x.name, detail: "", amount: x.price });
     }
     lines.forEach((l) => (l.amount = Math.round(l.amount)));   // whole pounds, so the lines always add up to the total
     const total = lines.reduce((s, l) => s + l.amount, 0);
-    return { winter, dayType, eveningTotal, menu, eve, drinks, lines, total, base, baseLabel, priced, when };
+    return { winter, dayType, lines, total, base, baseLabel, priced, when };
   }
 
   function schedule(total: number) {
@@ -507,9 +395,8 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
     (form.elements.namedItem("date") as HTMLSelectElement).value = state.date;
     (form.elements.namedItem("holiday") as HTMLInputElement).checked = state.holiday;
     for (const k of ["day", "evening"]) (form.elements.namedItem(k) as HTMLInputElement).value = String(state[k]);
-    for (const k of ["year", "dayType", "menu", "eveFood", "drinks", "plan"])
+    for (const k of ["year", "dayType", "plan"])
       form.querySelectorAll<HTMLInputElement>(`input[name="${k}"]`).forEach((el) => (el.checked = el.value === String(state[k])));
-    form.querySelectorAll<HTMLInputElement>('input[name="extras"]').forEach((el) => (el.checked = state.extras.includes(el.value)));
     (form.elements.namedItem("couple") as HTMLInputElement).value = state.couple;
     (form.elements.namedItem("coordinator") as HTMLInputElement).value = state.coordinator;
   }
@@ -518,25 +405,20 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
     const r = calculate();
     const g = P.guests;
     const season = r.winter ? P.winter : P.summer;
-    const hireOnly = !r.winter && (PENDING.has("feasting") || PENDING.has("drinks"));
+    const hireOnly = !r.winter && !FEAST;   // summer with no catering price: the figure is the building only
+    const summerFeast = !r.winter && !!FEAST;
     // guest numbers only matter where they change the price
     const guestStep = form.querySelector<HTMLDetailsElement>("details[data-guests]")!;
     if (hireOnly && guestStep.open) guestStep.open = false;
     guestStep.hidden = hireOnly;
 
-    // sections with nothing to choose (included in winter, or priced separately) step out of the way
-    form.querySelectorAll<HTMLDetailsElement>("details[data-choice]").forEach((d) => {
-      const hide = r.winter || PENDING.has(d.dataset.choice!);
-      if (hide && d.open) d.open = false;
-      d.hidden = hide;
-    });
     // each day button carries its own price, so days can be compared at a glance
     document.querySelectorAll<HTMLElement>("[data-chip-price]").forEach((el) => {
       const alt = calculate(state.month, { dayType: el.dataset.chipPrice, holiday: false });
       el.textContent = alt.priced ? pounds(alt.base) : "TBC";
     });
     // show the sections that apply to this season
-    document.querySelectorAll<HTMLElement>("[data-mode]").forEach((el) => (el.hidden = el.hasAttribute("data-pending") || el.dataset.mode !== (r.winter ? "winter" : "summer")));
+    document.querySelectorAll<HTMLElement>("[data-mode]").forEach((el) => (el.hidden = el.dataset.mode !== (r.winter ? "winter" : "summer")));
 
     const exact = state.date ? parseDate(state.date) : null;
     const when = exact ? `${exact.toLocaleDateString("en-GB", { weekday: "long" })} ${longDate(exact)}` : `${r.when} · ${MONTHS[state.month - 1]} ${state.year}`;
@@ -547,29 +429,27 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
     $("season-inline").textContent = `(${season.label})`;
     const hol = holidayName(state.date);
     $("holiday-note").textContent = (hol && state.holiday ? `${longDate(parseDate(state.date))} is ${hol}. ` : "") + (r.winter ? "Charged at the Friday to Sunday rate" : "Charged at the Saturday rate");
-    $("s-guests").textContent = state.evening ? `${state.day} day · ${state.evening} evening-only` : `${plural(state.day, "day guest", "day guests")}`;
+    $("s-guests").textContent = state.evening && r.winter ? `${state.day} day · ${state.evening} evening-only` : `${plural(state.day, "day guest", "day guests")}`;
     $("guest-note").textContent = `The Lodge welcomes up to ${g.maxDay} guests for the wedding breakfast and ${g.maxEveningTotal} in the evening.` +
+      (summerFeast ? ` Feasting is ${money(FEAST.perGuest)} per guest.` : "") +
       (r.winter && r.priced ? ` The winter collection is priced for ${P.winter.includedGuests} guests. Each additional day guest is ${money(P.winter.collection[String(state.year)].extraDayGuest)} and each evening-only guest is ${money(P.winter.collection[String(state.year)].eveningGuest)}.` : "");
     $("season-note").textContent = r.winter
       ? "Included in the winter collection: food, drinks, essential wedding styling and dedicated coordination."
-      : hireOnly ? `Guest numbers do not change the venue hire price. The Lodge welcomes up to ${g.maxDay} guests for the wedding breakfast and ${g.maxEveningTotal} in the evening.` : "";
+      : hireOnly ? `Guest numbers do not change the venue hire price. The Lodge welcomes up to ${g.maxDay} guests for the wedding breakfast and ${g.maxEveningTotal} in the evening.`
+      : `Feasting is with Follow the Smoke. Four ways to feast: ${FEAST.styles.join(", ")}. ${FEAST.includes}.`;
     $("s-names").textContent = state.couple || "Optional";
     $("for").textContent = state.couple ? `For ${state.couple}` : "";
     $("done-for").textContent = state.couple ? ` for ${state.couple}` : "";
-    $("s-food").textContent = r.winter ? "Included" : PENDING.has("feasting") ? "Priced separately" : (r.eve.perHead > 0 ? `${r.menu.name} · ${r.eve.name}` : r.menu.name);
-    $("s-drinks").textContent = r.winter ? "Included" : PENDING.has("drinks") ? "Priced separately" : r.drinks.name;
     $("scope").textContent = !r.priced ? "" : hireOnly ? "Catering, drinks and styling are not included in this figure. They are priced separately."
-      : "";
-    const chosen = state.extras.filter((id: string) => { const x = P.extras.find((e: any) => e.id === id); return x && !(r.winter && x.summerOnly); });
-    $("s-extras").textContent = chosen.length ? plural(chosen.length, "extra", "extras") : "None chosen";
+      : summerFeast ? "Drinks are not included in this figure. All alcoholic and non-alcoholic drinks are priced separately, as are styling and other wedding services." : "";
 
     const summary = document.getElementById("estimate")!;
     summary.classList.toggle("is-unpriced", !r.priced);
     // in summer the figure is the building only, so the panel says so in its heading, not in small print
-    summary.classList.toggle("is-hire-only", hireOnly && r.priced);
-    $("heading").textContent = hireOnly ? "Venue hire only" : "Your estimate";
-    $("bar-label").textContent = hireOnly ? "Venue hire only" : "Your estimate";
-    $("context").textContent = `${season.label} · ${when}` + (hireOnly ? "" : ` · ${plural(state.day, "day guest", "day guests")}` + (state.evening ? `, ${state.evening} more in the evening` : ""));
+    summary.classList.toggle("is-hire-only", !r.winter && r.priced);
+    const heading = hireOnly ? "Venue hire only" : summerFeast ? "Venue hire and feasting" : "Your estimate";
+    $("heading").textContent = heading; $("bar-label").textContent = heading;
+    $("context").textContent = `${season.label} · ${when}` + (hireOnly ? "" : ` · ${plural(state.day, "day guest", "day guests")}` + (state.evening && r.winter ? `, ${state.evening} more in the evening` : ""));
 
     if (!r.priced) {
       $("total").textContent = "To be confirmed";
@@ -582,7 +462,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
       $("s-plan").textContent = s.plan.name;
       $("total").textContent = pounds(r.total);
       $("bar-total").textContent = pounds(r.total);
-      $("per-guest").textContent = hireOnly ? "" : `About ${pounds(r.total / Math.max(1, state.day))} per day guest`;
+      $("per-guest").textContent = !r.winter ? "" : `About ${pounds(r.total / Math.max(1, state.day))} per day guest`;
       $("lines").replaceChildren(...r.lines.map((l) => {
         const row = document.createElement("div"); row.className = "calc-line";
         const dt = document.createElement("dt"); dt.textContent = l.label;
@@ -606,7 +486,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
     const alt = calculate(r.winter ? 6 : 11);
     const wc = P.winter.collection[String(state.year)];
     $("compare").textContent = r.winter
-      ? (alt.priced ? `In summer (April to September), venue hire for the same day is ${pounds(alt.base)}. Catering, drinks and styling are priced separately.` : `Summer prices for ${state.year} are yet to be confirmed.`)
+      ? (alt.priced ? `In summer (April to September), venue hire for the same day is ${pounds(alt.base)}${FEAST ? `, with feasting at ${money(FEAST.perGuest)} per guest` : ""}. Drinks and styling are priced separately.` : `Summer prices for ${state.year} are yet to be confirmed.`)
       : (alt.priced ? `In winter (October to March), the same day is ${pounds(alt.base)} for ${P.winter.includedGuests} guests, with food, drinks and styling included. Additional day guests are ${money(wc.extraDayGuest)} each and evening-only guests ${money(wc.eveningGuest)} each.` : `Winter prices for ${state.year} are yet to be confirmed.`);
     document.querySelector<HTMLElement>("[data-switch]")!.textContent = r.winter ? "Show a summer date" : "Show a winter date";
 
@@ -626,8 +506,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
     const u = new URLSearchParams();
     u.set("y", state.year); u.set("m", state.month); u.set("d", state.dayType); if (state.holiday) u.set("h", "1");
     u.set("g", state.day); u.set("e", state.evening);
-    u.set("menu", state.menu); u.set("eve", state.eveFood); u.set("dr", state.drinks); u.set("plan", state.plan);
-    if (state.extras.length) u.set("x", state.extras.join("."));
+    u.set("plan", state.plan);
     if (state.date) u.set("date", state.date);
     if (state.couple) u.set("for", state.couple);
     if (state.coordinator) u.set("by", state.coordinator);
@@ -642,7 +521,6 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
     if (t.name === "date") { state.date = t.value; applyDate(); }
     else if (t.name === "year" || t.name === "dayType") { state[t.name] = t.name === "year" ? Number(t.value) : t.value; state.date = ""; }
     else if (t.name === "month") { state.month = Number(t.value); state.date = ""; }
-    else if (t.name === "extras") state.extras = [...form.querySelectorAll<HTMLInputElement>('input[name="extras"]:checked')].map((el) => el.value);
     else if (t.name === "holiday") state.holiday = t.checked;
     else if (t.name === "couple") state.couple = clean(t.value, 80);
     else if (t.name === "coordinator") {
