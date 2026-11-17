@@ -286,7 +286,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
 
       <!-- Estimate -->
       <aside class="calc-summary" id="estimate" aria-live="polite">
-        <p class="eyebrow">Your estimate</p>
+        <p class="eyebrow" data-out="heading">Your estimate</p>
         <p class="calc-summary__for" data-out="for"></p>
         <p class="calc-summary__total" data-out="total"></p>
         <p class="calc-summary__per" data-out="per-guest"></p>
@@ -323,7 +323,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
 
     <!-- Phone: running total pinned to the bottom -->
     <a class="calc-bar" href="#estimate" data-bar>
-      <span class="calc-bar__label">Your estimate</span>
+      <span class="calc-bar__label" data-out="bar-label">Your estimate</span>
       <span class="calc-bar__total" data-out="bar-total"></span>
       <span class="calc-bar__go">View</span>
     </a>
@@ -545,13 +545,17 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
     $("done-for").textContent = state.couple ? ` for ${state.couple}` : "";
     $("s-food").textContent = r.winter ? "Included" : PENDING.has("feasting") ? "Priced separately" : (r.eve.perHead > 0 ? `${r.menu.name} · ${r.eve.name}` : r.menu.name);
     $("s-drinks").textContent = r.winter ? "Included" : PENDING.has("drinks") ? "Priced separately" : r.drinks.name;
-    $("scope").textContent = !r.priced ? "" : hireOnly ? "Venue hire only. Catering, drinks, styling and other wedding services are priced separately."
+    $("scope").textContent = !r.priced ? "" : hireOnly ? "Catering, drinks and styling are not included in this figure. They are priced separately."
       : "";
     const chosen = state.extras.filter((id: string) => { const x = P.extras.find((e: any) => e.id === id); return x && !(r.winter && x.summerOnly); });
     $("s-extras").textContent = chosen.length ? plural(chosen.length, "extra", "extras") : "None chosen";
 
     const summary = document.getElementById("estimate")!;
     summary.classList.toggle("is-unpriced", !r.priced);
+    // in summer the figure is the building only, so the panel says so in its heading, not in small print
+    summary.classList.toggle("is-hire-only", hireOnly && r.priced);
+    $("heading").textContent = hireOnly ? "Venue hire only" : "Your estimate";
+    $("bar-label").textContent = hireOnly ? "Venue hire only" : "Your estimate";
     $("context").textContent = `${season.label} · ${when}` + (hireOnly ? "" : ` · ${plural(state.day, "day guest", "day guests")}` + (state.evening ? `, ${state.evening} more in the evening` : ""));
 
     if (!r.priced) {
@@ -880,6 +884,7 @@ const SEPARATE = "Priced separately. Your coordinator will take you through the 
   .calc-actions__links { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: center; gap: 0 1.25rem; }
   .calc-summary__per { font-size: var(--text-sm); color: var(--stone); }
   .calc-summary__scope { font-size: var(--text-sm); color: var(--stone); line-height: 1.5; }
+  .calc-summary.is-hire-only .calc-summary__scope { font-size: var(--text-base); color: var(--ink-strong); margin-top: .5rem; padding-left: .8rem; border-left: 2px solid var(--accent); }
   .calc-summary__scope:empty, .calc-summary__per:empty { display: none; }
   .calc-summary__context { font-size: var(--text-sm); color: var(--ink); margin-top: .35rem; }
   .calc-lines { margin-top: 1rem; border-top: 1px solid var(--hairline); }
