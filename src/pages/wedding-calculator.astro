@@ -199,6 +199,16 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
 
         <dl class="calc-lines" data-out="lines"></dl>
 
+        <div class="calc-extras" data-extras hidden>
+          <p class="eyebrow">Additional guests</p>
+          <dl class="calc-lines" data-out="extra-lines"></dl>
+          <div class="calc-line calc-line--sum">
+            <dt>Additional guests total<small data-out="extra-due"></small></dt>
+            <dd data-out="extra-total"></dd>
+          </div>
+          <p class="calc-hint" data-out="extra-note"></p>
+        </div>
+
         <div class="calc-plan">
           <p class="eyebrow">{onePlan ? "Payment plan · sample breakdown" : (<Fragment>Payment plan · <span data-out="plan-name"></span></Fragment>)}</p>
           {onePlan && <span data-out="plan-name" hidden></span>}
@@ -327,6 +337,7 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
     const useHoliday = opts.holiday ?? state.holiday;
     const dayType = P.dayTypes.find((t: any) => t.id === useDay);
     const lines: { label: string; detail: string; amount: number }[] = [];
+    const extras: { label: string; detail: string; amount: number }[] = [];   // winter guests beyond the collection, paid separately
     const when = useHoliday ? "Bank holiday" : dayType.short;
     let base = 0; let baseLabel = ""; let priced = true;
 
@@ -339,8 +350,8 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
         base = peak ? c.peak : c.offPeak;
         lines.push({ label: baseLabel, detail: `${when}, ${state.year}. Food, drinks and styling included`, amount: base });
         const extra = Math.max(0, state.day - P.winter.includedGuests);
-        if (extra > 0) lines.push({ label: "Additional day guests", detail: `${extra} at ${money(c.extraDayGuest)}`, amount: extra * c.extraDayGuest });
-        if (state.evening > 0) lines.push({ label: "Evening-only guests", detail: `${state.evening} at ${money(c.eveningGuest)}`, amount: state.evening * c.eveningGuest });
+        if (extra > 0) extras.push({ label: "Additional day guests", detail: `${extra} at ${money(c.extraDayGuest)}`, amount: extra * c.extraDayGuest });
+        if (state.evening > 0) extras.push({ label: "Evening-only guests", detail: `${state.evening} at ${money(c.eveningGuest)}`, amount: state.evening * c.eveningGuest });
       }
     } else {
       const table = P.summer.hire[String(state.year)];
@@ -350,14 +361,16 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
         base = table[useHoliday ? P.summer.holidayRate : useDay];
         lines.push({ label: baseLabel, detail: `${when}, ${P.summer.label.toLowerCase().replace("styal", "Styal")} ${state.year}. ${P.summer.hireIncludes}`, amount: base });
         if (FEAST) lines.push({ label: FEAST.name + (FEAST.minimumSpend ? " *" : ""), detail: `${plural(state.day, "guest", "guests")} at ${money(FEAST.perGuest)}. ${FEAST.short}`, amount: state.day * FEAST.perGuest });
-        if (FEAST && state.evening > 0) lines.push({ label: "Evening-only guests", detail: `${state.evening} at ${money(FEAST.eveningGuest)}. Evening food`, amount: state.evening * FEAST.eveningGuest });
         const TW = P.summer.tableware;
         if (TW) lines.push({ label: TW.name, detail: `${plural(state.day, "guest", "guests")} at ${money(TW.perGuest)}`, amount: state.day * TW.perGuest });
+        if (FEAST && state.evening > 0) lines.push({ label: "Evening-only guests", detail: `${state.evening} at ${money(FEAST.eveningGuest)}. Evening food`, amount: state.evening * FEAST.eveningGuest });
       }
     }
     lines.forEach((l) => (l.amount = Math.round(l.amount)));   // whole pounds, so the lines always add up to the total
+    extras.forEach((l) => (l.amount = Math.round(l.amount)));
     const total = lines.reduce((s, l) => s + l.amount, 0);
-    return { winter, dayType, lines, total, base, baseLabel, priced, when };
+    const extraTotal = extras.reduce((s, l) => s + l.amount, 0);
+    return { winter, dayType, lines, extras, total, extraTotal, base, baseLabel, priced, when };
   }
 
   // Sample breakdown: the deposit when you book, then the balance in equal monthly payments,
@@ -373,15 +386,18 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
     const n = (fin.getFullYear() - today.getFullYear()) * 12 + fin.getMonth() - today.getMonth();   // monthly payments, starting next month
     const deposit = Math.min(P.payment.deposit, Math.round(total));
     const rest = Math.round(total) - deposit;
-    const rows: { label: string; when: string; amount: string }[] = [{ label: "Deposit", when: P.payment.depositWhen, amount: pounds(deposit) }];
+    const rows: { label: string; when: string; amount: string; per?: string }[] = [{ label: "Deposit", when: P.payment.depositWhen, amount: pounds(deposit) }];
+    let teaser = "";
+    const dueText = n >= 1 ? `by ${finText}` : "when you book";
     if (rest > 0 && n >= 2) {
       const each = Math.floor(rest / n), last = rest - each * (n - 1);
       const first = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-      rows.push({ label: `${n} monthly payments of ${pounds(each)}`, when: `Starting the month after you book: ${monthYear(first)} to ${monthYear(fin)}` + (last !== each ? `. Final payment ${pounds(last)}` : "") + (exact ? `. Paid in full by ${finText}` : ""), amount: pounds(rest) });
+      rows.push({ label: `${n} monthly payments`, when: `${monthYear(first)} to ${monthYear(fin)}, starting the month after you book` + (last !== each ? `. Final payment ${pounds(last)}` : "") + (exact ? `. Paid in full by ${finText}` : ""), amount: pounds(each), per: "a month" });
+      teaser = `${pounds(deposit)} deposit, then ${pounds(each)} a month`;
     } else if (rest > 0) {
       rows.push({ label: "Remaining balance", when: n === 1 ? `By ${finText}` : "When you book, as the payment plan ends two months before your wedding", amount: pounds(rest) });
     }
-    return { plan, rows, note: P.payment.note ?? "" };
+    return { plan, rows, teaser, dueText, note: P.payment.note ?? "" };
   }
 
   // ---------- render ----------
@@ -457,7 +473,7 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
     $("s-guests").textContent = state.evening ? `${state.day} day · ${state.evening} evening-only` : `${plural(state.day, "day guest", "day guests")}`;
     $("guest-note").textContent = `The Lodge welcomes up to ${g.maxDay} guests for the wedding breakfast and ${g.maxEveningTotal} in the evening.` +
       (summerFeast ? ` Feasting is ${money(FEAST.perGuest)} per day guest${P.summer.tableware ? `, and crockery, cutlery and linen ${money(P.summer.tableware.perGuest)} per day guest: ${money(FEAST.perGuest + P.summer.tableware.perGuest)} per day guest in total` : ""}. Evening-only guests are ${money(FEAST.eveningGuest)} each, for evening food.` : "") +
-      (r.winter && r.priced ? ` The winter collection is priced for ${P.winter.includedGuests} guests. Each additional day guest is ${money(P.winter.collection[String(state.year)].extraDayGuest)} and each evening-only guest is ${money(P.winter.collection[String(state.year)].eveningGuest)}.` : "");
+      (r.winter && r.priced ? ` The winter collection is priced for ${P.winter.includedGuests} guests. Each additional day guest is ${money(P.winter.collection[String(state.year)].extraDayGuest)} and each evening-only guest ${money(P.winter.collection[String(state.year)].eveningGuest)}, charged as one payment two months before your wedding.` : "");
     $("season-note").textContent = r.winter
       ? "Included in the winter collection: food, drinks, essential wedding styling and dedicated coordination."
       : hireOnly ? `Guest numbers do not change the venue hire price. The Lodge welcomes up to ${g.maxDay} guests for the wedding breakfast and ${g.maxEveningTotal} in the evening.`
@@ -481,13 +497,27 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
       $("bar-total").textContent = "To be confirmed";
       $("per-guest").textContent = `${season.label} prices for ${state.year} have not been released yet. Please ask your coordinator.`;
       $("lines").replaceChildren(); $("schedule").replaceChildren(); $("plan-note").textContent = "";
+      document.querySelector<HTMLElement>("[data-extras]")!.hidden = true;
       $("s-plan").textContent = P.payment.plans.find((p: any) => p.id === state.plan).name; $("plan-name").textContent = $("s-plan").textContent;
     } else {
       const s = schedule(r.total);
       $("s-plan").textContent = s.plan.name;
       $("total").textContent = pounds(r.total);
       $("bar-total").textContent = pounds(r.total);
-      $("per-guest").textContent = !r.winter ? "" : `About ${pounds(r.total / Math.max(1, state.day))} per day guest`;
+      $("per-guest").textContent = s.teaser;
+      // winter guests beyond the collection: their own figure, one payment two months before the wedding
+      const ex = document.querySelector<HTMLElement>("[data-extras]")!;
+      ex.hidden = !r.extras.length;
+      $("extra-lines").replaceChildren(...r.extras.map((l) => {
+        const row = document.createElement("div"); row.className = "calc-line";
+        const dt = document.createElement("dt"); dt.textContent = l.label;
+        const sm = document.createElement("small"); sm.textContent = l.detail; dt.append(sm);
+        const dd = document.createElement("dd"); dd.textContent = pounds(l.amount);
+        row.append(dt, dd); return row;
+      }));
+      $("extra-total").textContent = pounds(r.extraTotal);
+      $("extra-due").textContent = `One payment, due two months before your wedding (${s.dueText})`;
+      $("extra-note").textContent = `Not part of the payment plan. Collection and additional guests together: ${pounds(r.total + r.extraTotal)}.`;
       $("lines").replaceChildren(...r.lines.map((l) => {
         const row = document.createElement("div"); row.className = "calc-line";
         const dt = document.createElement("dt"); dt.textContent = l.label;
@@ -501,6 +531,7 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
         const a = document.createElement("span"); a.className = "calc-schedule__what"; a.textContent = p.label;
         const w = document.createElement("small"); w.textContent = p.when; a.append(w);
         const b = document.createElement("span"); b.className = "calc-schedule__amt"; b.textContent = p.amount;
+        if (p.per) { b.classList.add("calc-schedule__amt--lead"); const u = document.createElement("small"); u.textContent = p.per; b.append(u); }
         li.append(a, b); return li;
       }));
       $("plan-note").textContent = s.note;
@@ -790,7 +821,12 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
   }
   .calc-summary.is-ready { border-color: var(--accent); }
   .calc-actions__links { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: center; gap: 0 1.25rem; }
-  .calc-summary__per { font-size: var(--text-sm); color: var(--stone); }
+  .calc-summary__per { font-size: var(--text-base); color: var(--ink-strong); margin-top: .15rem; }
+  .calc-extras { margin-top: .9rem; display: grid; gap: .25rem; }
+  .calc-extras .calc-lines { margin-top: 0; }
+  .calc-line--sum dt, .calc-line--sum dd { font-size: var(--text-base); color: var(--ink-strong); }
+  .calc-schedule .calc-schedule__amt--lead { font-size: 1.6rem; line-height: 1; color: var(--ink-strong); text-align: right; }
+  .calc-schedule .calc-schedule__amt--lead small { font-size: var(--text-xs); color: var(--stone); margin-top: .15rem; }
   .calc-summary__scope { font-size: var(--text-sm); color: var(--stone); line-height: 1.5; }
   .calc-summary.is-hire-only .calc-summary__scope { font-size: var(--text-sm); line-height: 1.45; color: var(--ink-strong); margin-top: .5rem; padding-left: .8rem; border-left: 2px solid var(--accent); }
   .calc-summary__scope:empty, .calc-summary__per:empty { display: none; }
