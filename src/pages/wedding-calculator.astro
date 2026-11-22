@@ -104,7 +104,7 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
           <div class="calc-step__body">
             {[
               { id: "day", label: "Day guests", hint: "Ceremony, wedding breakfast and evening", mode: undefined },
-              { id: "evening", label: "Evening-only guests", hint: "Joining for the party", mode: undefined },
+              { id: "evening", label: "Evening-only guests", hint: "Joining for the party", mode: "winter" },
             ].map((g) => (
               <div class="calc-stepper" data-mode={g.mode}>
                 <div>
@@ -200,10 +200,10 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
         <dl class="calc-lines" data-out="lines"></dl>
 
         <div class="calc-extras" data-extras hidden>
-          <p class="eyebrow">Additional guests</p>
+          <p class="eyebrow" data-out="extra-title"></p>
           <dl class="calc-lines" data-out="extra-lines"></dl>
           <div class="calc-line calc-line--sum">
-            <dt>Additional guests total<small data-out="extra-due"></small></dt>
+            <dt><span data-out="extra-sum"></span><small data-out="extra-due"></small></dt>
             <dd data-out="extra-total"></dd>
           </div>
           <p class="calc-hint" data-out="extra-note"></p>
@@ -360,10 +360,9 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
       else {
         base = table[useHoliday ? P.summer.holidayRate : useDay];
         lines.push({ label: baseLabel, detail: `${when}, ${P.summer.label.toLowerCase().replace("styal", "Styal")} ${state.year}. ${P.summer.hireIncludes}`, amount: base });
-        if (FEAST) lines.push({ label: FEAST.name + (FEAST.minimumSpend ? " *" : ""), detail: `${plural(state.day, "guest", "guests")} at ${money(FEAST.perGuest)}. ${FEAST.short}`, amount: state.day * FEAST.perGuest });
+        if (FEAST) extras.push({ label: FEAST.name + (FEAST.minimumSpend ? " *" : ""), detail: `${plural(state.day, "guest", "guests")} at ${money(FEAST.perGuest)}. ${FEAST.short}`, amount: state.day * FEAST.perGuest });
         const TW = P.summer.tableware;
-        if (TW) lines.push({ label: TW.name, detail: `${plural(state.day, "guest", "guests")} at ${money(TW.perGuest)}`, amount: state.day * TW.perGuest });
-        if (FEAST && state.evening > 0) lines.push({ label: "Evening-only guests", detail: `${state.evening} at ${money(FEAST.eveningGuest)}. Evening food`, amount: state.evening * FEAST.eveningGuest });
+        if (TW) extras.push({ label: TW.name, detail: `${plural(state.day, "guest", "guests")} at ${money(TW.perGuest)}`, amount: state.day * TW.perGuest });
       }
     }
     lines.forEach((l) => (l.amount = Math.round(l.amount)));   // whole pounds, so the lines always add up to the total
@@ -470,9 +469,9 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
     $("season-inline").textContent = `(${season.label})`;
     const hol = holidayName(state.date);
     $("holiday-note").textContent = (hol && state.holiday ? `${longDate(parseDate(state.date))} is ${hol}. ` : "") + (r.winter ? "Charged at the Friday to Sunday rate" : "Charged at the Saturday rate");
-    $("s-guests").textContent = state.evening ? `${state.day} day · ${state.evening} evening-only` : `${plural(state.day, "day guest", "day guests")}`;
+    $("s-guests").textContent = state.evening && r.winter ? `${state.day} day · ${state.evening} evening-only` : `${plural(state.day, "day guest", "day guests")}`;
     $("guest-note").textContent = `The Lodge welcomes up to ${g.maxDay} guests for the wedding breakfast and ${g.maxEveningTotal} in the evening.` +
-      (summerFeast ? ` Feasting is ${money(FEAST.perGuest)} per day guest${P.summer.tableware ? `, and crockery, cutlery and linen ${money(P.summer.tableware.perGuest)} per day guest: ${money(FEAST.perGuest + P.summer.tableware.perGuest)} per day guest in total` : ""}. Evening-only guests are ${money(FEAST.eveningGuest)} each, for evening food.` : "") +
+      (summerFeast ? ` Feasting is ${money(FEAST.perGuest)} per day guest${P.summer.tableware ? `, and crockery, cutlery and linen ${money(P.summer.tableware.perGuest)} per day guest: ${money(FEAST.perGuest + P.summer.tableware.perGuest)} per day guest in total` : ""}, paid directly to the suppliers.` : "") +
       (r.winter && r.priced ? ` The winter collection is priced for ${P.winter.includedGuests} guests. Each additional day guest is ${money(P.winter.collection[String(state.year)].extraDayGuest)} and each evening-only guest ${money(P.winter.collection[String(state.year)].eveningGuest)}, charged as one payment two months before your wedding.` : "");
     $("season-note").textContent = r.winter
       ? "Included in the winter collection: food, drinks, essential wedding styling and dedicated coordination."
@@ -488,9 +487,9 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
     summary.classList.toggle("is-unpriced", !r.priced);
     // in summer the figure is the building only, so the panel says so in its heading, not in small print
     summary.classList.toggle("is-hire-only", !r.winter && r.priced);
-    const heading = hireOnly ? "Venue hire only" : summerFeast ? "Venue hire and feasting" : "Your estimate";
+    const heading = !r.winter ? "Venue hire" : "Your estimate";
     $("heading").textContent = heading; $("bar-label").textContent = heading;
-    $("context").textContent = `${season.label} · ${when}` + (hireOnly ? "" : ` · ${plural(state.day, "day guest", "day guests")}` + (state.evening ? `, ${state.evening} more in the evening` : ""));
+    $("context").textContent = `${season.label} · ${when}` + (hireOnly ? "" : ` · ${plural(state.day, "day guest", "day guests")}` + (state.evening && r.winter ? `, ${state.evening} more in the evening` : ""));
 
     if (!r.priced) {
       $("total").textContent = "To be confirmed";
@@ -516,8 +515,12 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
         row.append(dt, dd); return row;
       }));
       $("extra-total").textContent = pounds(r.extraTotal);
-      $("extra-due").textContent = `One payment, due two months before your wedding (${s.dueText})`;
-      $("extra-note").textContent = `Not part of the payment plan. Collection and additional guests together: ${pounds(r.total + r.extraTotal)}.`;
+      // winter: guests beyond the collection, paid to the Lodge in one payment. Summer: catering and tableware, paid to the suppliers.
+      $("extra-title").textContent = r.winter ? "Additional guests" : "Paid directly to your suppliers";
+      $("extra-sum").textContent = r.winter ? "Additional guests total" : "Suppliers total";
+      $("extra-due").textContent = r.winter ? `One payment, due two months before your wedding (${s.dueText})` : "Paid to Follow the Smoke and Special Days, not to Styal Lodge";
+      $("extra-note").textContent = r.winter ? `Not part of the payment plan. Collection and additional guests together: ${pounds(r.total + r.extraTotal)}.`
+        : `Not part of the payment plan. Venue hire and suppliers together: ${pounds(r.total + r.extraTotal)}.`;
       $("lines").replaceChildren(...r.lines.map((l) => {
         const row = document.createElement("div"); row.className = "calc-line";
         const dt = document.createElement("dt"); dt.textContent = l.label;
@@ -537,7 +540,7 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
       $("plan-note").textContent = s.note;
     }
     // The minimum is stated, never applied: under it, the note says so plainly and stands out.
-    const catering = summerFeast ? state.day * FEAST.perGuest + state.evening * FEAST.eveningGuest : 0;
+    const catering = summerFeast ? state.day * FEAST.perGuest : 0;
     const under = summerFeast && !!FEAST.minimumSpend && r.priced && catering < FEAST.minimumSpend;
     $("min-note").textContent = summerFeast && FEAST.minimumSpend && r.priced
       ? `* Minimum catering spend is ${pounds(FEAST.minimumSpend)}.` + (under ? ` The catering in this estimate comes to ${pounds(catering)}.` : "") : "";
