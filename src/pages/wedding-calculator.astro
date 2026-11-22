@@ -379,7 +379,7 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
       const first = new Date(today.getFullYear(), today.getMonth() + 1, 1);
       rows.push({ label: `${n} monthly payments of ${pounds(each)}`, when: `Starting the month after you book: ${monthYear(first)} to ${monthYear(fin)}` + (last !== each ? `. Final payment ${pounds(last)}` : "") + (exact ? `. Paid in full by ${finText}` : ""), amount: pounds(rest) });
     } else if (rest > 0) {
-      rows.push({ label: "Remaining balance", when: n === 1 ? `By ${finText}` : "When you book, as your wedding is within two months", amount: pounds(rest) });
+      rows.push({ label: "Remaining balance", when: n === 1 ? `By ${finText}` : "When you book, as the payment plan ends two months before your wedding", amount: pounds(rest) });
     }
     return { plan, rows, note: P.payment.note ?? "" };
   }
@@ -461,7 +461,7 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
     $("season-note").textContent = r.winter
       ? "Included in the winter collection: food, drinks, essential wedding styling and dedicated coordination."
       : hireOnly ? `Guest numbers do not change the venue hire price. The Lodge welcomes up to ${g.maxDay} guests for the wedding breakfast and ${g.maxEveningTotal} in the evening.`
-      : `Venue hire includes fairy lights and a Prosecco toast. Feasting is with Follow the Smoke. Four ways to feast: ${FEAST.styles.join(", ")}. ${FEAST.includes}.`;
+      : `Venue hire includes fairy lights and a Prosecco toast. Feasting is with Follow the Smoke. Four ways to feast: ${FEAST.styles.join(", ")}. Feasting ${FEAST.includes.charAt(0).toLowerCase() + FEAST.includes.slice(1)}.`;
     $("s-names").textContent = state.couple || "Optional";
     $("for").textContent = state.couple ? `For ${state.couple}` : "";
     $("done-for").textContent = state.couple ? ` for ${state.couple}` : "";
@@ -605,6 +605,10 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
 
   document.querySelectorAll<HTMLInputElement>('input[name="season"]').forEach((el) =>
     el.addEventListener("change", () => { if (el.checked) setSeason(el.value as "summer" | "winter"); }));
+  // When the estimate is taller than the screen it scrolls with the page and then rests with its
+  // last line in view, so nothing in it is ever out of reach or hidden in a box that scrolls on its own.
+  const panel = document.getElementById("estimate")!;
+  new ResizeObserver(() => panel.style.setProperty("--summary-h", `${panel.offsetHeight}px`)).observe(panel);
   const copyBtn = document.querySelector<HTMLButtonElement>("[data-copy]")!;
   copyBtn.addEventListener("click", async () => {
     const original = "Copy a link to this estimate";
@@ -648,7 +652,7 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
 
   /* ---- layout ---- */
   .calc { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: clamp(1.5rem, 4vw, 4rem); align-items: start; }
-  .calc-summary { position: sticky; top: calc(var(--header-h) + 1.25rem); max-height: calc(100vh - var(--header-h) - 2.5rem); overflow-y: auto; overscroll-behavior: contain; }
+  .calc-summary { position: sticky; top: min(calc(var(--header-h) + 1.25rem), calc(100vh - var(--summary-h, 0px) - 1.25rem)); }
 
   /* ---- steps (accordion) ---- */
   .calc-steps { border-top: 1px solid var(--hairline); }
