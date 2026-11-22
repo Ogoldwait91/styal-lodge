@@ -456,7 +456,7 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
     $("holiday-note").textContent = (hol && state.holiday ? `${longDate(parseDate(state.date))} is ${hol}. ` : "") + (r.winter ? "Charged at the Friday to Sunday rate" : "Charged at the Saturday rate");
     $("s-guests").textContent = state.evening ? `${state.day} day · ${state.evening} evening-only` : `${plural(state.day, "day guest", "day guests")}`;
     $("guest-note").textContent = `The Lodge welcomes up to ${g.maxDay} guests for the wedding breakfast and ${g.maxEveningTotal} in the evening.` +
-      (summerFeast ? ` Feasting is ${money(FEAST.perGuest)} per day guest${P.summer.tableware ? `, and crockery, cutlery and linen ${money(P.summer.tableware.perGuest)} per day guest` : ""}. Evening-only guests are ${money(FEAST.eveningGuest)} each, for evening food.` : "") +
+      (summerFeast ? ` Feasting is ${money(FEAST.perGuest)} per day guest${P.summer.tableware ? `, and crockery, cutlery and linen ${money(P.summer.tableware.perGuest)} per day guest: ${money(FEAST.perGuest + P.summer.tableware.perGuest)} per day guest in total` : ""}. Evening-only guests are ${money(FEAST.eveningGuest)} each, for evening food.` : "") +
       (r.winter && r.priced ? ` The winter collection is priced for ${P.winter.includedGuests} guests. Each additional day guest is ${money(P.winter.collection[String(state.year)].extraDayGuest)} and each evening-only guest is ${money(P.winter.collection[String(state.year)].eveningGuest)}.` : "");
     $("season-note").textContent = r.winter
       ? "Included in the winter collection: food, drinks, essential wedding styling and dedicated coordination."
