@@ -1,5 +1,5 @@
 {
-  "_readme": "All calculator prices live here. Summer venue hire comes from the Styal Lodge 2027-2029 price list, summer feasting from The Styal Guide, and the winter collection from the Styal Lodge pricing guide. All prices include VAT. Drinks are priced separately and are not part of the calculator.",
+  "_readme": "All calculator prices live here. Summer venue hire, feasting, tableware and the payment plan come from the owner's notes of 22 November 2026 and The Styal Guide; the winter collection from the Styal Lodge pricing guide. All prices include VAT. Drinks are priced separately and are not part of the calculator.",
   "years": [
     2027,
     2028,
@@ -63,24 +63,24 @@
     "hire": {
       "2027": {
         "monWed": 4250,
-        "thu": 4750,
-        "fri": 5000,
-        "sat": 5250,
-        "sun": 5000
+        "thu": 5000,
+        "fri": 5500,
+        "sat": 5750,
+        "sun": 5500
       },
       "2028": {
-        "monWed": 4500,
-        "thu": 5000,
-        "fri": 5250,
-        "sat": 5500,
-        "sun": 5250
+        "monWed": 4750,
+        "thu": 5250,
+        "fri": 5750,
+        "sat": 6250,
+        "sun": 5750
       },
       "2029": {
-        "monWed": 4500,
-        "thu": 5000,
-        "fri": 5250,
-        "sat": 5500,
-        "sun": 5250
+        "monWed": 4750,
+        "thu": 5250,
+        "fri": 5750,
+        "sat": 6250,
+        "sun": 5750
       }
     },
     "feasting": {
@@ -93,7 +93,14 @@
         "Formal Plated Dining",
         "Tapas Sharing"
       ],
-      "eveningGuest": 12
+      "eveningGuest": 12,
+      "minimumSpend": 3000,
+      "short": "Main course, dessert and evening food"
+    },
+    "hireIncludes": "Includes fairy lights and a Prosecco toast",
+    "tableware": {
+      "name": "Special Days crockery, cutlery and linen",
+      "perGuest": 12
     }
   },
   "winter": {
@@ -135,25 +142,16 @@
     "defaultEvening": 0
   },
   "payment": {
-    "balanceWeeksBefore": null,
-    "note": "Your coordinator will confirm payment dates when you book.",
+    "note": "A sample if you book today. Your coordinator will agree a personalised payment plan with you, ending two months before your wedding date.",
     "plans": [
       {
         "id": "deposit",
-        "name": "Deposit",
-        "summary": "A £500 deposit secures your date.",
-        "steps": [
-          {
-            "label": "Deposit",
-            "amount": 500,
-            "when": "booking"
-          },
-          {
-            "label": "Remaining balance",
-            "when": "balance"
-          }
-        ]
+        "name": "Deposit and payment plan",
+        "summary": "A £500 deposit, then a personalised payment plan ending two months before your wedding date."
       }
-    ]
+    ],
+    "deposit": 500,
+    "finalMonthsBefore": 2,
+    "depositWhen": "When you book and sign your contract. A date can be held for two weeks first"
   }
 }
