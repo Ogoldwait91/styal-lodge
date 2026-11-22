@@ -373,11 +373,11 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
     const n = (fin.getFullYear() - today.getFullYear()) * 12 + fin.getMonth() - today.getMonth();   // monthly payments, starting next month
     const deposit = Math.min(P.payment.deposit, Math.round(total));
     const rest = Math.round(total) - deposit;
-    const rows: { label: string; when: string; amount: string }[] = [{ label: "Deposit", when: "When you book", amount: pounds(deposit) }];
+    const rows: { label: string; when: string; amount: string }[] = [{ label: "Deposit", when: P.payment.depositWhen, amount: pounds(deposit) }];
     if (rest > 0 && n >= 2) {
       const each = Math.floor(rest / n), last = rest - each * (n - 1);
       const first = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-      rows.push({ label: `${n} monthly payments of ${pounds(each)}`, when: `${monthYear(first)} to ${monthYear(fin)}` + (last !== each ? `. Final payment ${pounds(last)}` : "") + (exact ? `. Paid in full by ${finText}` : ""), amount: pounds(rest) });
+      rows.push({ label: `${n} monthly payments of ${pounds(each)}`, when: `Starting the month after you book: ${monthYear(first)} to ${monthYear(fin)}` + (last !== each ? `. Final payment ${pounds(last)}` : "") + (exact ? `. Paid in full by ${finText}` : ""), amount: pounds(rest) });
     } else if (rest > 0) {
       rows.push({ label: "Remaining balance", when: n === 1 ? `By ${finText}` : "When you book, as your wedding is within two months", amount: pounds(rest) });
     }
@@ -505,7 +505,12 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
       }));
       $("plan-note").textContent = s.note;
     }
-    $("min-note").textContent = summerFeast && FEAST.minimumSpend && r.priced ? `* Minimum catering spend is ${pounds(FEAST.minimumSpend)}.` : "";
+    // The minimum is stated, never applied: under it, the note says so plainly and stands out.
+    const catering = summerFeast ? state.day * FEAST.perGuest + state.evening * FEAST.eveningGuest : 0;
+    const under = summerFeast && !!FEAST.minimumSpend && r.priced && catering < FEAST.minimumSpend;
+    $("min-note").textContent = summerFeast && FEAST.minimumSpend && r.priced
+      ? `* Minimum catering spend is ${pounds(FEAST.minimumSpend)}.` + (under ? ` The catering in this estimate comes to ${pounds(catering)}.` : "") : "";
+    $("min-note").classList.toggle("is-under", under);
     $("prepared").textContent = `Prepared ${longDate(today)}${state.coordinator ? ` by ${state.coordinator}` : ""}. `;
 
     // label each Next button with the section it leads to
@@ -800,6 +805,8 @@ const onePlan = pricing.payment.plans.length < 2;   // nothing to choose between
   .calc-actions { margin-top: .9rem; display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
   .calc-actions .btn { letter-spacing: 0.01em; padding-inline: 1em; border-radius: 999px; }
   .calc-actions .calc-link { margin-top: 0; }
+  .calc-smallprint.is-under { color: var(--ink-strong); font-size: var(--text-sm); padding: .5rem .7rem; border: 1px solid var(--taupe); border-radius: var(--radius); }
+  .calc-smallprint:empty { display: none; }
   .calc-smallprint { margin-top: .45rem; font-size: var(--text-xs); color: var(--stone); line-height: 1.55; }
 
   /* ---- phone total bar ---- */

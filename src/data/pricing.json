@@ -142,7 +142,7 @@
     "defaultEvening": 0
   },
   "payment": {
-    "note": "A sample breakdown if you book today. Your coordinator will agree a personalised payment plan with you, ending two months before your wedding date.",
+    "note": "A sample if you book today. Your coordinator will agree a personalised payment plan with you, ending two months before your wedding date.",
     "plans": [
       {
         "id": "deposit",
@@ -151,6 +151,7 @@
       }
     ],
     "deposit": 500,
-    "finalMonthsBefore": 2
+    "finalMonthsBefore": 2,
+    "depositWhen": "When you book and sign your contract. A date can be held for two weeks first"
   }
 }
