@@ -127,14 +127,14 @@
         "eveningGuest": 12
       },
       "2028": {
-        "offPeak": 7750,
-        "peak": 9000,
+        "offPeak": 7250,
+        "peak": 8500,
         "extraDayGuest": 90,
         "eveningGuest": 12
       },
       "2029": {
-        "offPeak": 7750,
-        "peak": 9000,
+        "offPeak": 7250,
+        "peak": 8500,
         "extraDayGuest": 90,
         "eveningGuest": 12
       }
