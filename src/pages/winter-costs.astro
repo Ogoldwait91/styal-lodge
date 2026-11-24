@@ -78,11 +78,14 @@ const INVOICES = [
           <dl>
             <div><dt>Package</dt><dd data-out="ftsBase"></dd></div>
             <div><dt>Extra guests</dt><dd data-out="ftsExtra"></dd></div>
+            <div><dt>Deposit paid</dt><dd data-out="ftsDeposit"></dd></div>
+            <div class="boh-split__total"><dt>Total to pay</dt><dd data-out="ftsDue"></dd></div>
           </dl>
           <p class="boh-split__who">{rates.suppliers.sd}</p>
           <dl>
             <div><dt>Package</dt><dd data-out="sdBase"></dd></div>
             <div><dt>Extra guests</dt><dd data-out="sdExtra"></dd></div>
+            <div class="boh-split__total"><dt>Total to pay</dt><dd data-out="sdDue"></dd></div>
           </dl>
         </div>
         <dl class="boh-three">
@@ -223,7 +226,9 @@ const INVOICES = [
     }
     const sum = (k: "paid" | "fts" | "sd" | "lodge", from = 0) => p2(rows.slice(from).reduce((t, r) => t + r[k], 0));
     return { rows, paid: sum("paid"), fts: sum("fts"), sd: sum("sd"), lodge: sum("lodge"), extras: sum("paid", 1),
-      ftsBase: rows[0].fts, ftsExtra: sum("fts", 1), sdBase: rows[0].sd, sdExtra: sum("sd", 1) };
+      ftsBase: rows[0].fts, ftsExtra: sum("fts", 1), sdBase: rows[0].sd, sdExtra: sum("sd", 1),
+      // the deposit is already with Follow the Smoke, so it comes off what is still to pay, never off what the Lodge keeps
+      ftsDeposit: R.ftsDeposit, ftsDue: p2(sum("fts") - R.ftsDeposit), sdDue: sum("sd") };
   }
 
   // what each invoice should say, in words
@@ -269,6 +274,7 @@ const INVOICES = [
   function render() {
     const w = work(state);
     for (const k of INV) $(k).textContent = money(w[k]);
+    $("ftsDeposit").textContent = money(-w.ftsDeposit); $("ftsDue").textContent = money(w.ftsDue); $("sdDue").textContent = money(w.sdDue);
     $("lodge").textContent = money(w.lodge);
     $("paid").textContent = money(w.paid);
     $("paid-detail").textContent = w.extras > 0 ? `Package ${money(w.rows[0].paid)} and extra guests ${money(w.extras)}.` : `The package, with no extra guests.`;
@@ -418,8 +424,8 @@ const INVOICES = [
     }
     if (el.hasAttribute("data-download")) {
       const esc = (v: unknown) => { const s = String(v ?? ""); return /^[=+\-@]/.test(s) ? `"'${s.replace(/"/g, '""')}"` : `"${s.replace(/"/g, '""')}"`; };
-      const head = ["Couple", "Wedding date", "Year", "Day", "Extra adult day", "Extra child day", "Adult evening", "Child evening", "Couple paid", "Follow the Smoke package (no VAT)", "Follow the Smoke extra guests (no VAT)", "Special Days package", "Special Days extra guests", "Styal Lodge keeps", "Invoices", "Saved"];
-      const lines = load().map((x) => { const w = work(x.s); return [x.couple, x.date, x.s.year, R.dayTypes.find((d: any) => d.id === x.s.day).label, x.s.adultDay, x.s.childDay, x.s.adultEve, x.s.childEve, w.paid.toFixed(2), w.ftsBase.toFixed(2), w.ftsExtra.toFixed(2), w.sdBase.toFixed(2), w.sdExtra.toFixed(2), w.lodge.toFixed(2), invoiceStatus(x).text, x.at.slice(0, 10)].map(esc).join(","); });
+      const head = ["Couple", "Wedding date", "Year", "Day", "Extra adult day", "Extra child day", "Adult evening", "Child evening", "Couple paid", "Follow the Smoke package (no VAT)", "Follow the Smoke extra guests (no VAT)", "Follow the Smoke deposit paid", "Follow the Smoke total to pay", "Special Days package", "Special Days extra guests", "Special Days total to pay", "Styal Lodge keeps", "Invoices", "Saved"];
+      const lines = load().map((x) => { const w = work(x.s); return [x.couple, x.date, x.s.year, R.dayTypes.find((d: any) => d.id === x.s.day).label, x.s.adultDay, x.s.childDay, x.s.adultEve, x.s.childEve, w.paid.toFixed(2), w.ftsBase.toFixed(2), w.ftsExtra.toFixed(2), w.ftsDeposit.toFixed(2), w.ftsDue.toFixed(2), w.sdBase.toFixed(2), w.sdExtra.toFixed(2), w.sdDue.toFixed(2), w.lodge.toFixed(2), invoiceStatus(x).text, x.at.slice(0, 10)].map(esc).join(","); });
       const blob = new Blob(["﻿" + [head.map(esc).join(","), ...lines].join("\r\n")], { type: "text/csv;charset=utf-8" });
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `styal-lodge-winter-weddings-${new Date().toISOString().slice(0, 10)}.csv`;
       document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
@@ -471,24 +477,27 @@ const INVOICES = [
   .boh-hint { font-size: var(--text-xs); color: var(--stone); line-height: 1.55; }
 
   /* ---- the answer ---- */
-  .boh-card { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius); padding: clamp(1.1rem, 2vw, 1.6rem); display: grid; gap: .2rem; position: sticky; top: 1.25rem; }
+  .boh-card { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius); padding: clamp(1rem, 1.6vw, 1.35rem) clamp(1.1rem, 2vw, 1.6rem); display: grid; gap: .2rem; position: sticky; top: 1.25rem; }
   .boh-split { display: grid; margin-top: .4rem; }
-  .boh-split__who { padding-top: .6rem; border-top: 1px solid var(--hairline); font-size: var(--text-base); color: var(--ink); }
+  .boh-split__who { padding-top: .5rem; border-top: 1px solid var(--hairline); font-size: var(--text-base); color: var(--ink); }
   .boh-split__who small { margin-left: .4em; font-size: var(--text-xs); color: var(--taupe); }
-  .boh-split dl { margin: .05rem 0 .5rem; display: grid; }
-  .boh-split dl > div { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: .1rem 0; }
+  .boh-split dl { margin: 0 0 .45rem; display: grid; }
+  .boh-split dl > div { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: .02rem 0; }
   .boh-split dt { font-size: var(--text-sm); color: var(--stone); }
-  .boh-split dd { margin: 0; font-size: var(--text-lg); line-height: 1.2; color: var(--ink-strong); font-variant-numeric: lining-nums; white-space: nowrap; }
+  .boh-split .boh-split__total { margin-top: .2rem; padding-top: .25rem; border-top: 1px dashed var(--hairline); }
+  .boh-split .boh-split__total dd { font-size: clamp(1.25rem, 1.1rem + .6vw, 1.55rem); }
+  .boh-split .boh-split__total dt { color: var(--ink); }
+  .boh-split dd { margin: 0; font-size: clamp(1.05rem, .95rem + .4vw, 1.25rem); line-height: 1.2; color: var(--ink-strong); font-variant-numeric: lining-nums; white-space: nowrap; }
   .boh-three { display: grid; margin: 0; }
-  .boh-three > div { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: .65rem 0; border-top: 1px solid var(--hairline); }
+  .boh-three > div { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: .5rem 0; border-top: 1px solid var(--hairline); }
   .boh-three dt { font-size: var(--text-base); color: var(--ink); }
-  .boh-three dd { margin: 0; font-size: clamp(1.7rem, 1.3rem + 1.4vw, 2.5rem); line-height: 1; letter-spacing: -0.02em; color: var(--ink-strong); font-variant-numeric: lining-nums; white-space: nowrap; }
+  .boh-three dd { margin: 0; font-size: clamp(1.6rem, 1.25rem + 1.2vw, 2.2rem); line-height: 1; letter-spacing: -0.02em; color: var(--ink-strong); font-variant-numeric: lining-nums; white-space: nowrap; }
   .boh-three__lodge { border-bottom: 1px solid var(--hairline); }
   .boh-three__lodge dt { color: var(--accent-hover); }
   .boh-three__lodge dd { color: var(--accent-hover); }
-  .boh-paid { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-top: .55rem; font-size: var(--text-base); color: var(--stone); }
+  .boh-paid { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-top: .4rem; font-size: var(--text-base); color: var(--stone); }
   .boh-paid strong { font-weight: var(--fw-regular); font-size: var(--text-lg); color: var(--ink-strong); font-variant-numeric: lining-nums; }
-  .boh-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem 1.25rem; margin-top: .7rem; }
+  .boh-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem 1.25rem; margin-top: .5rem; }
   .boh-save { display: grid; gap: .4rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--hairline); }
   .boh-save label { font-size: var(--text-sm); color: var(--stone); margin-top: .3rem; }
   .boh-save input, .boh-money input { min-height: 46px; padding: 0 1rem; font: inherit; font-size: var(--text-base); color: var(--ink); background: transparent; border: 1px solid var(--hairline); border-radius: var(--radius); width: 100%; font-variant-numeric: lining-nums; }
