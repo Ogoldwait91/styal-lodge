@@ -1,0 +1,44 @@
+{
+  "_readme": "Back of house, Winter in Styal: what the couple pays and how it splits between Follow the Smoke, Special Days and Styal Lodge. Every figure includes VAT and comes from the owner's two sheets of 23 November 2026. The Lodge share is always the couple's price minus the two supplier shares. To change a rate, change it here only.",
+  "includedGuests": 50,
+  "suppliers": { "fts": "Follow the Smoke", "sd": "Special Days", "lodge": "Styal Lodge" },
+  "dayTypes": [
+    { "id": "monThu", "label": "Monday to Thursday" },
+    { "id": "friSun", "label": "Friday to Sunday" }
+  ],
+  "guestTypes": [
+    { "id": "adultDay", "label": "Extra day guests", "hint": "Adults, beyond the 50 in the package", "child": false },
+    { "id": "adultEve", "label": "Evening guests", "hint": "Adults, evening only", "child": false },
+    { "id": "childDay", "label": "Extra day guests", "hint": "Children, 12 and under", "child": true },
+    { "id": "childEve", "label": "Evening guests", "hint": "Children, 12 and under", "child": true }
+  ],
+  "years": {
+    "2026": {
+      "package": { "monThu": 6250, "friSun": 7500, "ftsPerHead": 39, "sdPerHead": 12 },
+      "extras": {
+        "adultDay": { "price": 60, "fts": 39, "sd": 12 },
+        "childDay": { "price": 30, "fts": 19.5, "sd": 12 },
+        "adultEve": { "price": 12, "fts": 7.5, "sd": 0 },
+        "childEve": { "price": 12, "fts": 7.5, "sd": 0 }
+      }
+    },
+    "2027": {
+      "package": { "monThu": 6750, "friSun": 8000, "ftsPerHead": 41.5, "sdPerHead": 12 },
+      "extras": {
+        "adultDay": { "price": 75, "fts": 41.5, "sd": 12 },
+        "childDay": { "price": 37.5, "fts": 20.75, "sd": 12 },
+        "adultEve": { "price": 12, "fts": 8, "sd": 0 },
+        "childEve": { "price": 12, "fts": 8, "sd": 0 }
+      }
+    },
+    "2028": {
+      "package": { "monThu": 7250, "friSun": 8500, "ftsPerHead": 44, "sdPerHead": 12 },
+      "extras": {
+        "adultDay": { "price": 90, "fts": 44, "sd": 12 },
+        "childDay": { "price": 45, "fts": 22, "sd": 12 },
+        "adultEve": { "price": 12, "fts": 8, "sd": 0 },
+        "childEve": { "price": 12, "fts": 8, "sd": 0 }
+      }
+    }
+  }
+}
