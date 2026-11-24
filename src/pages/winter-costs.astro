@@ -1,0 +1,515 @@
+---
+/*
+  Back of house — Winter in Styal. For management, not couples.
+  Shows what a couple paid and how it splits between Follow the Smoke, Special Days and the Lodge,
+  checks supplier invoices against that, and keeps a list of saved weddings with running totals.
+  Every rate comes from src/data/back-of-house.json. Nothing here needs editing when rates change.
+  The page is not linked from anywhere and asks search engines not to list it.
+*/
+import Base from "../layouts/Base.astro";
+import rates from "../data/back-of-house.json";
+
+const years = Object.keys(rates.years);
+---
+<Base
+  title="Back of house — Styal Lodge"
+  description="Winter in Styal costs: where each wedding's fees go."
+  showFloatingCta={false}
+  standalone={true}
+>
+  <main id="main" class="boh-page">
+    <header class="boh-mast container">
+      <img class="boh-mast__logo" src="/logo-dark.svg" width="971" height="617" alt="Styal Lodge — Wedding Venue, Cheshire" />
+      <p class="eyebrow">Back of house</p>
+      <h1 class="display">Winter in Styal <em>costs</em></h1>
+    </header>
+
+    <div class="boh container">
+      <!-- ============ The wedding ============ -->
+      <form class="boh-form" id="boh" novalidate>
+        <fieldset class="boh-field">
+          <legend>Year</legend>
+          <div class="boh-chips">
+            {years.map((y) => (
+              <label class="boh-chip"><input type="radio" name="year" value={y} /><span>{y}</span></label>
+            ))}
+          </div>
+        </fieldset>
+
+        <fieldset class="boh-field">
+          <legend>Day of the wedding</legend>
+          <div class="boh-chips">
+            {rates.dayTypes.map((d) => (
+              <label class="boh-chip"><input type="radio" name="day" value={d.id} /><span>{d.label}</span></label>
+            ))}
+          </div>
+        </fieldset>
+
+        <div class="boh-field">
+          <p class="boh-legend">Guests beyond the {rates.includedGuests} in the package</p>
+          <div class="boh-steppers">
+            {rates.guestTypes.map((g) => (
+              <div class="boh-stepper" data-child={g.child ? "" : undefined} hidden={g.child}>
+                <label for={`g-${g.id}`}>{g.label}<small>{g.hint}</small></label>
+                <div class="boh-stepper__ctrl">
+                  <button type="button" data-step={g.id} data-dir="-1" aria-label={`Fewer: ${g.label}, ${g.hint}`}>−</button>
+                  <input id={`g-${g.id}`} name={g.id} type="number" inputmode="numeric" min="0" max="300" value="0" />
+                  <button type="button" data-step={g.id} data-dir="1" aria-label={`More: ${g.label}, ${g.hint}`}>+</button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <button type="button" class="boh-link" data-children>Add children</button>
+        </div>
+      </form>
+
+      <!-- ============ Where the money goes ============ -->
+      <section class="boh-card" id="result" aria-live="polite">
+        <p class="eyebrow">Where the money goes</p>
+        <dl class="boh-three">
+          <div><dt>{rates.suppliers.fts}</dt><dd data-out="fts"></dd></div>
+          <div><dt>{rates.suppliers.sd}</dt><dd data-out="sd"></dd></div>
+          <div class="boh-three__lodge"><dt>{rates.suppliers.lodge} keeps</dt><dd data-out="lodge"></dd></div>
+        </dl>
+        <p class="boh-paid"><span>The couple paid</span><strong data-out="paid"></strong></p>
+        <p class="boh-hint" data-out="paid-detail"></p>
+
+        <div class="boh-actions">
+          <button type="button" class="btn btn--solid" data-save-open>Save this wedding</button>
+          <button type="button" class="boh-link" data-reset>Start again</button>
+        </div>
+
+        <div class="boh-save" data-save hidden>
+          <label for="s-couple">Couple's names</label>
+          <input id="s-couple" type="text" maxlength="60" autocomplete="off" placeholder="e.g. Katie and Chris" />
+          <label for="s-date">Wedding date</label>
+          <input id="s-date" type="text" maxlength="30" autocomplete="off" placeholder="e.g. 18 December 2027" />
+          <div class="boh-actions">
+            <button type="button" class="btn btn--solid" data-save-do>Save</button>
+            <button type="button" class="boh-link" data-save-cancel>Cancel</button>
+          </div>
+        </div>
+        <p class="boh-saved-note" data-out="saved-note" role="status"></p>
+      </section>
+    </div>
+
+    <!-- ============ Folded away until needed ============ -->
+    <div class="boh-more container">
+      <details class="boh-fold" data-fold="invoice">
+        <summary><span>Check an invoice</span><span class="boh-fold__value" data-out="invoice-summary"></span></summary>
+        <div class="boh-fold__body">
+          {(["fts", "sd"] as const).map((k) => (
+            <div class="boh-invoice">
+              <div>
+                <label for={`inv-${k}`}>{rates.suppliers[k]} invoice total</label>
+                <p class="boh-hint" data-out={`${k}-expected`}></p>
+              </div>
+              <div class="boh-money"><span>£</span><input id={`inv-${k}`} name={`inv-${k}`} type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" /></div>
+              <p class="boh-verdict" data-out={`${k}-verdict`} role="status"></p>
+            </div>
+          ))}
+        </div>
+      </details>
+
+      <details class="boh-fold" data-fold="workings">
+        <summary><span>How this is worked out</span></summary>
+        <div class="boh-fold__body">
+          <div class="boh-table-wrap">
+            <table class="boh-table">
+              <thead><tr><th scope="col"></th><th scope="col">Couple pays</th><th scope="col">{rates.suppliers.fts}</th><th scope="col">{rates.suppliers.sd}</th><th scope="col">{rates.suppliers.lodge}</th></tr></thead>
+              <tbody data-out="rows"></tbody>
+              <tfoot data-out="foot"></tfoot>
+            </table>
+          </div>
+          <p class="boh-hint">All figures include VAT. What the Lodge keeps is before drinks, styling, staff and its other costs.</p>
+        </div>
+      </details>
+
+      <details class="boh-fold" data-fold="saved">
+        <summary><span>Saved weddings</span><span class="boh-fold__value" data-out="saved-count"></span></summary>
+        <div class="boh-fold__body">
+          <p class="boh-hint" data-out="saved-empty">Nothing saved yet. Use "Save this wedding" to start a running total.</p>
+          <div data-saved-wrap hidden>
+            <div class="boh-chips boh-chips--small" data-out="filter"></div>
+            <dl class="boh-three boh-three--totals">
+              <div><dt>{rates.suppliers.fts}</dt><dd data-out="t-fts"></dd></div>
+              <div><dt>{rates.suppliers.sd}</dt><dd data-out="t-sd"></dd></div>
+              <div class="boh-three__lodge"><dt>{rates.suppliers.lodge} keeps</dt><dd data-out="t-lodge"></dd></div>
+            </dl>
+            <p class="boh-hint" data-out="t-note"></p>
+            <div class="boh-table-wrap">
+              <table class="boh-table boh-table--saved">
+                <thead><tr><th scope="col">Wedding</th><th scope="col">{rates.suppliers.fts}</th><th scope="col">{rates.suppliers.sd}</th><th scope="col">{rates.suppliers.lodge}</th><th scope="col">Invoices</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
+                <tbody data-out="saved-rows"></tbody>
+              </table>
+            </div>
+            <div class="boh-actions">
+              <button type="button" class="boh-link" data-download>Download as a spreadsheet</button>
+            </div>
+            <p class="boh-hint">Saved on this computer, in this browser only. Download the spreadsheet now and then to keep a copy.</p>
+          </div>
+        </div>
+      </details>
+    </div>
+  </main>
+</Base>
+
+<script type="application/json" id="boh-rates" set:html={JSON.stringify(rates)} />
+
+<script>
+  const R = JSON.parse(document.getElementById("boh-rates")!.textContent!);
+  const YEARS: string[] = Object.keys(R.years);
+  const TYPES: string[] = R.guestTypes.map((g: any) => g.id);
+  const KEY = "styal-boh-weddings";
+  const form = document.getElementById("boh") as HTMLFormElement;
+  const $ = (name: string) => document.querySelector<HTMLElement>(`[data-out="${name}"]`)!;
+
+  // money: whole pounds when it is whole, pence when it is not, a proper minus sign when negative
+  const money = (n: number) => {
+    const v = Math.round(n * 100) / 100;
+    const s = "£" + Math.abs(v).toLocaleString("en-GB", { minimumFractionDigits: Number.isInteger(v) ? 0 : 2, maximumFractionDigits: 2 });
+    return v < 0 ? "−" + s : s;
+  };
+  const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+  const thisYear = String(new Date().getFullYear());
+  const blank = () => ({ year: YEARS.includes(thisYear) ? thisYear : YEARS[0], day: R.dayTypes[1].id as string, adultDay: 0, childDay: 0, adultEve: 0, childEve: 0 });
+  const state: any = blank();
+  let invoices: { fts: string; sd: string } = { fts: "", sd: "" };
+  let openId: string | null = null;      // the saved wedding currently open, if any
+  let filter = "all";
+
+  // ---- start from a link, if one was used ----
+  const q = new URLSearchParams(location.search);
+  if (YEARS.includes(q.get("y") ?? "")) state.year = q.get("y");
+  if (R.dayTypes.some((d: any) => d.id === q.get("d"))) state.day = q.get("d");
+  for (const [p, k] of [["a", "adultDay"], ["c", "childDay"], ["ea", "adultEve"], ["ec", "childEve"]]) {
+    const n = parseInt(q.get(p) ?? "", 10);
+    if (Number.isFinite(n)) state[k] = Math.max(0, Math.min(300, n));
+  }
+
+  // ---- the sums: one place, used by the screen, the invoice check and the saved list ----
+  function work(s: any) {
+    const y = R.years[s.year], inc = R.includedGuests;
+    const rows: { label: string; detail: string; paid: number; fts: number; sd: number; lodge: number }[] = [];
+    const add = (label: string, detail: string, paid: number, fts: number, sd: number) => rows.push({ label, detail, paid, fts, sd, lodge: paid - fts - sd });
+    add(`Package for ${inc} guests`, `${R.dayTypes.find((d: any) => d.id === s.day).label}, ${s.year}`, y.package[s.day], inc * y.package.ftsPerHead, inc * y.package.sdPerHead);
+    for (const g of R.guestTypes) {
+      const n = s[g.id], x = y.extras[g.id];
+      if (n > 0) add(`${g.label}: ${g.child ? "children" : "adults"}`, `${n} at ${money(x.price)}`, n * x.price, n * x.fts, n * x.sd);
+    }
+    const sum = (k: "paid" | "fts" | "sd" | "lodge") => Math.round(rows.reduce((t, r) => t + r[k], 0) * 100) / 100;
+    return { rows, paid: sum("paid"), fts: sum("fts"), sd: sum("sd"), lodge: sum("lodge"), extras: Math.round((sum("paid") - rows[0].paid) * 100) / 100 };
+  }
+
+  // what a supplier's invoice should say, in words
+  function expected(s: any, k: "fts" | "sd") {
+    const y = R.years[s.year], bits: string[] = [];
+    const head = k === "fts" ? y.package.ftsPerHead : y.package.sdPerHead;
+    bits.push(`${R.includedGuests} in the package at ${money(head)}`);
+    for (const g of R.guestTypes) {
+      const n = s[g.id], rate = y.extras[g.id][k];
+      if (n > 0 && rate > 0) bits.push(`${plural(n, g.child ? "child" : "adult", g.child ? "children" : "adults")} ${g.id.endsWith("Eve") ? "in the evening" : "extra in the day"} at ${money(rate)}`);
+    }
+    return bits.join(", ");
+  }
+
+  const parseMoney = (v: string) => { const n = parseFloat(v.replace(/[£,\s]/g, "")); return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : null; };
+  function verdict(entered: string, want: number) {
+    const n = parseMoney(entered);
+    if (n === null) return { text: "", state: "" };
+    const diff = Math.round((n - want) * 100) / 100;
+    if (diff === 0) return { text: "Matches.", state: "ok" };
+    return { text: `${money(Math.abs(diff))} ${diff > 0 ? "more" : "less"} than expected.`, state: "off" };
+  }
+
+  // ---- saved weddings (this browser only) ----
+  type Saved = { id: string; couple: string; date: string; s: any; inv: { fts: string; sd: string }; at: string };
+  const load = (): Saved[] => { try { const v = JSON.parse(localStorage.getItem(KEY) ?? "[]"); return Array.isArray(v) ? v : []; } catch { return []; } };
+  const store = (list: Saved[]) => { try { localStorage.setItem(KEY, JSON.stringify(list)); return true; } catch { return false; } };
+
+  function syncInputs() {
+    (form.elements.namedItem("year") as RadioNodeList).value = state.year;
+    (form.elements.namedItem("day") as RadioNodeList).value = state.day;
+    for (const t of TYPES) (form.elements.namedItem(t) as HTMLInputElement).value = String(state[t]);
+    (document.getElementById("inv-fts") as HTMLInputElement).value = invoices.fts;
+    (document.getElementById("inv-sd") as HTMLInputElement).value = invoices.sd;
+    if (state.childDay > 0 || state.childEve > 0) showChildren();
+  }
+  function showChildren() {
+    form.querySelectorAll<HTMLElement>("[data-child]").forEach((el) => (el.hidden = false));
+    form.querySelector<HTMLElement>("[data-children]")!.hidden = true;
+  }
+
+  function cell(tag: string, text: string, cls = "") { const c = document.createElement(tag); c.textContent = text; if (cls) c.className = cls; return c; }
+
+  function render() {
+    const w = work(state);
+    $("fts").textContent = money(w.fts); $("sd").textContent = money(w.sd); $("lodge").textContent = money(w.lodge);
+    $("paid").textContent = money(w.paid);
+    $("paid-detail").textContent = w.extras > 0 ? `Package ${money(w.rows[0].paid)} and extra guests ${money(w.extras)}.` : `The package, with no extra guests.`;
+
+    // invoice check
+    let checked = 0, off = 0;
+    for (const k of ["fts", "sd"] as const) {
+      $(`${k}-expected`).textContent = `Expected ${money(w[k])}: ${expected(state, k)}.`;
+      const v = verdict(invoices[k], w[k]);
+      const el = $(`${k}-verdict`); el.textContent = v.text; el.dataset.state = v.state;
+      if (v.state) checked++; if (v.state === "off") off++;
+    }
+    $("invoice-summary").textContent = !checked ? "" : off ? `${plural(off, "invoice does", "invoices do")} not match` : checked === 2 ? "Both match" : "Matches";
+
+    // workings
+    $("rows").replaceChildren(...w.rows.map((r) => {
+      const tr = document.createElement("tr");
+      const th = cell("th", r.label); th.setAttribute("scope", "row"); th.append(cell("small", r.detail));
+      tr.append(th, cell("td", money(r.paid)), cell("td", money(r.fts)), cell("td", money(r.sd)), cell("td", money(r.lodge)));
+      return tr;
+    }));
+    const ft = document.createElement("tr"); const fh = cell("th", "Total"); fh.setAttribute("scope", "row");
+    ft.append(fh, cell("td", money(w.paid)), cell("td", money(w.fts)), cell("td", money(w.sd)), cell("td", money(w.lodge)));
+    $("foot").replaceChildren(ft);
+
+    document.querySelector<HTMLElement>("[data-save-open]")!.textContent = openId ? "Save changes" : "Save this wedding";
+    renderSaved();
+
+    // keep the link in step so a refresh or a bookmark comes back to the same wedding
+    const u = new URLSearchParams({ y: state.year, d: state.day });
+    for (const [p, k] of [["a", "adultDay"], ["c", "childDay"], ["ea", "adultEve"], ["ec", "childEve"]]) if (state[k] > 0) u.set(p, String(state[k]));
+    history.replaceState(null, "", `${location.pathname}?${u}`);
+  }
+
+  function invoiceStatus(x: Saved) {
+    const w = work(x.s); const a = verdict(x.inv?.fts ?? "", w.fts).state, b = verdict(x.inv?.sd ?? "", w.sd).state;
+    if (a === "off" || b === "off") return { text: "Does not match", state: "off" };
+    if (a === "ok" && b === "ok") return { text: "Both match", state: "ok" };
+    if (a === "ok" || b === "ok") return { text: "One checked", state: "" };
+    return { text: "Not checked", state: "" };
+  }
+
+  function renderSaved() {
+    const all = load();
+    $("saved-count").textContent = all.length ? String(all.length) : "";
+    $("saved-empty").hidden = all.length > 0;
+    document.querySelector<HTMLElement>("[data-saved-wrap]")!.hidden = all.length === 0;
+    if (!all.length) return;
+    const yrs = [...new Set(all.map((x) => x.s.year))].sort();
+    if (filter !== "all" && !yrs.includes(filter)) filter = "all";
+    $("filter").replaceChildren(...(yrs.length > 1 ? ["all", ...yrs] : []).map((f) => {
+      const b = document.createElement("button"); b.type = "button"; b.className = "boh-pill"; b.textContent = f === "all" ? "All years" : f;
+      b.dataset.filter = f; b.setAttribute("aria-pressed", String(filter === f)); return b;
+    }));
+    const list = all.filter((x) => filter === "all" || x.s.year === filter);
+    const tot = { fts: 0, sd: 0, lodge: 0 };
+    $("saved-rows").replaceChildren(...list.map((x) => {
+      const w = work(x.s); tot.fts += w.fts; tot.sd += w.sd; tot.lodge += w.lodge;
+      const tr = document.createElement("tr"); if (x.id === openId) tr.className = "is-open";
+      const th = cell("th", x.couple || "Unnamed wedding"); th.setAttribute("scope", "row");
+      th.append(cell("small", [x.date, `${R.dayTypes.find((d: any) => d.id === x.s.day).label}, ${x.s.year}`].filter(Boolean).join(" · ")));
+      const st = invoiceStatus(x); const inv = cell("td", st.text); inv.dataset.state = st.state;
+      const act = document.createElement("td"); act.className = "boh-rowact";
+      const open = cell("button", "Open", "boh-link"); (open as HTMLButtonElement).type = "button"; open.dataset.open = x.id;
+      const del = cell("button", "Remove", "boh-link"); (del as HTMLButtonElement).type = "button"; del.dataset.remove = x.id;
+      act.append(open, del);
+      tr.append(th, cell("td", money(w.fts)), cell("td", money(w.sd)), cell("td", money(w.lodge)), inv, act);
+      return tr;
+    }));
+    $("t-fts").textContent = money(tot.fts); $("t-sd").textContent = money(tot.sd); $("t-lodge").textContent = money(tot.lodge);
+    $("t-note").textContent = `Running totals for ${plural(list.length, "wedding", "weddings")}${filter === "all" ? "" : ` in ${filter}`}.`;
+  }
+
+  // ---- events ----
+  form.addEventListener("change", (e) => {
+    const t = e.target as HTMLInputElement;
+    if (t.name === "year" || t.name === "day") state[t.name] = t.value;
+    else if (TYPES.includes(t.name)) { const n = parseInt(t.value, 10); state[t.name] = Number.isFinite(n) ? Math.max(0, Math.min(300, n)) : 0; t.value = String(state[t.name]); }
+    render();
+  });
+  form.addEventListener("click", (e) => {
+    const el = (e.target as HTMLElement).closest<HTMLElement>("[data-step],[data-children]");
+    if (!el) return;
+    if (el.hasAttribute("data-children")) { showChildren(); return; }
+    const k = el.dataset.step!; state[k] = Math.max(0, Math.min(300, state[k] + Number(el.dataset.dir)));
+    (form.elements.namedItem(k) as HTMLInputElement).value = String(state[k]); render();
+  });
+  for (const k of ["fts", "sd"] as const) document.getElementById(`inv-${k}`)!.addEventListener("input", (e) => { invoices[k] = (e.target as HTMLInputElement).value; render(); });
+
+  const savePanel = document.querySelector<HTMLElement>("[data-save]")!;
+  const note = (text: string) => { $("saved-note").textContent = text; };
+  document.querySelector("[data-save-open]")!.addEventListener("click", () => {
+    const cur = openId ? load().find((x) => x.id === openId) : null;
+    (document.getElementById("s-couple") as HTMLInputElement).value = cur?.couple ?? "";
+    (document.getElementById("s-date") as HTMLInputElement).value = cur?.date ?? "";
+    savePanel.hidden = false; note(""); (document.getElementById("s-couple") as HTMLInputElement).focus();
+  });
+  document.querySelector("[data-save-cancel]")!.addEventListener("click", () => { savePanel.hidden = true; });
+  document.querySelector("[data-save-do]")!.addEventListener("click", () => {
+    const list = load();
+    const entry: Saved = {
+      id: openId ?? `w${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+      couple: (document.getElementById("s-couple") as HTMLInputElement).value.trim().slice(0, 60),
+      date: (document.getElementById("s-date") as HTMLInputElement).value.trim().slice(0, 30),
+      s: { ...state }, inv: { ...invoices }, at: new Date().toISOString(),
+    };
+    const i = list.findIndex((x) => x.id === entry.id);
+    if (i >= 0) list[i] = entry; else list.push(entry);
+    if (!store(list)) { note("This browser would not save it. Private browsing can block saving."); return; }
+    openId = entry.id; savePanel.hidden = true;
+    note(`Saved${entry.couple ? ` for ${entry.couple}` : ""}. See "Saved weddings" below for the running totals.`);
+    render();
+  });
+  document.querySelector("[data-reset]")!.addEventListener("click", () => {
+    Object.assign(state, blank()); invoices = { fts: "", sd: "" }; openId = null; savePanel.hidden = true; note("");
+    syncInputs(); render(); window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  document.querySelector(".boh-more")!.addEventListener("click", (e) => {
+    const el = (e.target as HTMLElement).closest<HTMLElement>("[data-open],[data-remove],[data-confirm],[data-keep],[data-filter],[data-download]");
+    if (!el) return;
+    if (el.dataset.filter) { filter = el.dataset.filter; renderSaved(); return; }
+    if (el.dataset.open) {
+      const x = load().find((v) => v.id === el.dataset.open); if (!x) return;
+      Object.assign(state, blank(), x.s); invoices = { fts: x.inv?.fts ?? "", sd: x.inv?.sd ?? "" }; openId = x.id; savePanel.hidden = true;
+      note(`Opened ${x.couple || "the saved wedding"}. Change anything, then "Save changes".`);
+      syncInputs(); render(); window.scrollTo({ top: 0, behavior: "smooth" }); return;
+    }
+    if (el.dataset.remove) {   // ask on the row itself, never in a pop-up
+      const td = el.parentElement!; td.replaceChildren();
+      const yes = cell("button", "Remove for good", "boh-link boh-link--warn"); (yes as HTMLButtonElement).type = "button"; yes.dataset.confirm = el.dataset.remove;
+      const no = cell("button", "Keep", "boh-link"); (no as HTMLButtonElement).type = "button"; no.dataset.keep = "1";
+      td.append(yes, no); return;
+    }
+    if (el.dataset.keep) { renderSaved(); return; }
+    if (el.dataset.confirm) {
+      store(load().filter((v) => v.id !== el.dataset.confirm)); if (openId === el.dataset.confirm) openId = null;
+      render(); return;
+    }
+    if (el.hasAttribute("data-download")) {
+      const esc = (v: unknown) => { const s = String(v ?? ""); return /^[=+\-@]/.test(s) ? `"'${s.replace(/"/g, '""')}"` : `"${s.replace(/"/g, '""')}"`; };
+      const head = ["Couple", "Wedding date", "Year", "Day", "Extra adult day", "Extra child day", "Adult evening", "Child evening", "Couple paid", "Follow the Smoke", "Special Days", "Styal Lodge keeps", "Follow the Smoke invoice", "Special Days invoice", "Invoices", "Saved"];
+      const lines = load().map((x) => { const w = work(x.s); return [x.couple, x.date, x.s.year, R.dayTypes.find((d: any) => d.id === x.s.day).label, x.s.adultDay, x.s.childDay, x.s.adultEve, x.s.childEve, w.paid.toFixed(2), w.fts.toFixed(2), w.sd.toFixed(2), w.lodge.toFixed(2), parseMoney(x.inv?.fts ?? "")?.toFixed(2) ?? "", parseMoney(x.inv?.sd ?? "")?.toFixed(2) ?? "", invoiceStatus(x).text, x.at.slice(0, 10)].map(esc).join(","); });
+      const blob = new Blob(["﻿" + [head.map(esc).join(","), ...lines].join("\r\n")], { type: "text/csv;charset=utf-8" });
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `styal-lodge-winter-weddings-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    }
+  });
+
+  syncInputs(); render();
+</script>
+
+<style is:global>
+  .boh-page { --header-h: 0px; padding: clamp(1.5rem, 3.5vw, 2.75rem) 0 calc(var(--stack-gap) * 1.5); }
+  .boh-page [hidden] { display: none !important; }
+  .boh-page :is(label, legend, small, button, input, dt, dd, td, th, .boh-hint, .boh-legend) { letter-spacing: 0.01em; }
+
+  .boh-mast { display: grid; justify-items: center; text-align: center; padding-bottom: calc(var(--stack-gap) * .55); }
+  .boh-mast__logo { height: clamp(52px, 5.5vw, 84px); width: auto; margin-bottom: clamp(1rem, 2vw, 1.5rem); }
+  .boh-mast .display { font-size: var(--text-xl); }
+  .boh-mast .eyebrow { margin-bottom: var(--space-xs); }
+
+  .boh { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(1.5rem, 5vw, 5rem); align-items: start; max-width: 1080px; }
+  .boh-form { display: grid; gap: var(--space-lg); }
+  .boh-field { border: 0; padding: 0; margin: 0; min-width: 0; display: grid; gap: .7rem; }
+  .boh-field > legend, .boh-legend { padding: 0; margin-bottom: .7rem; font-size: var(--text-sm); color: var(--stone); }
+  .boh-legend { margin-bottom: 0; }
+
+  .boh-chips { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .boh-chip { position: relative; cursor: pointer; }
+  .boh-chip input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+  .boh-chip span { display: inline-flex; align-items: center; min-height: 48px; padding: 0 1.3em; border: 1px solid var(--hairline); border-radius: 999px; font-size: var(--text-base); transition: background-color .25s ease, border-color .25s ease, color .25s ease; }
+  .boh-chip:hover span { border-color: var(--accent); }
+  .boh-chip input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .boh-chip input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  .boh-steppers { display: grid; }
+  .boh-stepper { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .7rem 0; border-top: 1px solid var(--hairline); }
+  .boh-stepper:last-of-type { border-bottom: 1px solid var(--hairline); }
+  .boh-stepper label { font-size: var(--text-base); color: var(--ink); line-height: 1.3; }
+  .boh-stepper label small { display: block; font-size: var(--text-xs); color: var(--stone); margin-top: .1rem; }
+  .boh-stepper__ctrl { display: inline-flex; align-items: center; border: 1px solid var(--hairline); border-radius: 999px; flex: none; }
+  .boh-stepper__ctrl button { width: 48px; height: 48px; border: 0; background: none; font: inherit; font-size: 1.3rem; line-height: 1; color: var(--ink); cursor: pointer; border-radius: 999px; transition: background-color .2s ease, color .2s ease; }
+  .boh-stepper__ctrl button:hover { background: var(--accent); color: var(--on-accent); }
+  .boh-stepper__ctrl input { width: 3.6rem; border: 0; background: none; text-align: center; font: inherit; font-size: var(--text-base); color: var(--ink); font-variant-numeric: lining-nums; -moz-appearance: textfield; appearance: textfield; }
+  .boh-stepper__ctrl input::-webkit-outer-spin-button, .boh-stepper__ctrl input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .boh-page :is(input, button, summary):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  .boh-link { justify-self: start; background: none; border: 0; padding: 0 .25rem; min-height: 44px; display: inline-flex; align-items: center; font: inherit; font-size: var(--text-sm); color: var(--stone); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+  .boh-link:hover { color: var(--accent); }
+  .boh-link--warn { color: var(--ink-strong); }
+  .boh-hint { font-size: var(--text-xs); color: var(--stone); line-height: 1.55; }
+
+  /* ---- the answer ---- */
+  .boh-card { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius); padding: clamp(1.25rem, 2.4vw, 2rem); display: grid; gap: .35rem; position: sticky; top: 1.25rem; }
+  .boh-three { display: grid; margin: .5rem 0 0; }
+  .boh-three > div { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: .8rem 0; border-top: 1px solid var(--hairline); }
+  .boh-three dt { font-size: var(--text-base); color: var(--ink); }
+  .boh-three dd { margin: 0; font-size: clamp(1.7rem, 1.3rem + 1.4vw, 2.5rem); line-height: 1; letter-spacing: -0.02em; color: var(--ink-strong); font-variant-numeric: lining-nums; white-space: nowrap; }
+  .boh-three__lodge { border-bottom: 1px solid var(--hairline); }
+  .boh-three__lodge dt { color: var(--accent-hover); }
+  .boh-three__lodge dd { color: var(--accent-hover); }
+  .boh-paid { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-top: .8rem; font-size: var(--text-base); color: var(--stone); }
+  .boh-paid strong { font-weight: var(--fw-regular); font-size: var(--text-lg); color: var(--ink-strong); font-variant-numeric: lining-nums; }
+  .boh-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem 1.25rem; margin-top: 1rem; }
+  .boh-save { display: grid; gap: .4rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--hairline); }
+  .boh-save label { font-size: var(--text-sm); color: var(--stone); margin-top: .3rem; }
+  .boh-save input, .boh-money input { min-height: 46px; padding: 0 1rem; font: inherit; font-size: var(--text-base); color: var(--ink); background: transparent; border: 1px solid var(--hairline); border-radius: var(--radius); width: 100%; font-variant-numeric: lining-nums; }
+  .boh-save input:hover, .boh-money input:hover { border-color: var(--accent); }
+  .boh-save input::placeholder, .boh-money input::placeholder { color: var(--taupe); }
+  .boh-saved-note { font-size: var(--text-sm); color: var(--accent-hover); margin-top: .5rem; }
+  .boh-saved-note:empty { display: none; }
+
+  /* ---- folded sections ---- */
+  .boh-more { max-width: 1080px; margin-top: calc(var(--stack-gap) * .8); border-bottom: 1px solid var(--hairline); }
+  .boh-fold { border-top: 1px solid var(--hairline); }
+  .boh-fold > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 64px; font-size: var(--text-lg); color: var(--ink); }
+  .boh-fold > summary::-webkit-details-marker { display: none; }
+  .boh-fold > summary::after { content: ""; flex: none; width: .5rem; height: .5rem; margin-right: .3rem; border-right: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink); transform: translateY(-25%) rotate(45deg); transition: transform .25s ease; }
+  .boh-fold[open] > summary::after { transform: translateY(25%) rotate(-135deg); }
+  .boh-fold__value { margin-left: auto; font-size: var(--text-sm); color: var(--stone); }
+  .boh-fold__body { display: grid; gap: 1rem; padding: .25rem 0 1.75rem; }
+
+  .boh-invoice { display: grid; grid-template-columns: minmax(0, 1fr) 11rem minmax(0, 14rem); gap: .5rem 1.5rem; align-items: center; padding: .9rem 0; border-top: 1px solid var(--hairline); }
+  .boh-invoice:first-child { border-top: 0; }
+  .boh-invoice label { font-size: var(--text-base); color: var(--ink); }
+  .boh-money { position: relative; }
+  .boh-money span { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--stone); }
+  .boh-money input { padding-left: 2rem; }
+  .boh-verdict { font-size: var(--text-base); color: var(--stone); }
+  .boh-verdict[data-state="ok"] { color: var(--accent-hover); }
+  .boh-verdict[data-state="off"], .boh-table td[data-state="off"] { color: var(--ink-strong); font-weight: var(--fw-medium); }
+  .boh-verdict[data-state="ok"]::before { content: "✓ "; }
+  .boh-verdict[data-state="off"]::before { content: "! "; }
+  .boh-table td[data-state="ok"] { color: var(--accent-hover); }
+
+  .boh-table-wrap { overflow-x: auto; }
+  .boh-table { width: 100%; border-collapse: collapse; font-variant-numeric: lining-nums tabular-nums; }
+  .boh-table th, .boh-table td { padding: .7rem .75rem; border-bottom: 1px solid var(--hairline); text-align: right; font-size: var(--text-sm); font-weight: var(--fw-regular); color: var(--ink); white-space: nowrap; }
+  .boh-table thead th { font-size: var(--text-xs); color: var(--stone); vertical-align: bottom; white-space: normal; }
+  .boh-table :is(th, td):first-child { text-align: left; padding-left: 0; white-space: normal; }
+  .boh-table :is(th, td):last-child { padding-right: 0; }
+  .boh-table th small { display: block; font-size: var(--text-xs); color: var(--stone); margin-top: .1rem; }
+  .boh-table tfoot :is(th, td) { font-size: var(--text-base); color: var(--ink-strong); border-bottom: 0; }
+  .boh-table tr.is-open th { color: var(--accent-hover); }
+  .boh-table td.boh-rowact { white-space: nowrap; }
+  .boh-rowact .boh-link + .boh-link { margin-left: .6rem; }
+  .boh-table .boh-link { min-height: 36px; font-size: var(--text-xs); }
+
+  .boh-three--totals { margin-top: 0; }
+  .boh-three--totals > div:first-child { border-top: 0; }
+  .boh-three--totals dd { font-size: clamp(1.4rem, 1.1rem + 1vw, 1.9rem); }
+  .boh-chips--small:empty { display: none; }
+  .boh-pill { min-height: 40px; padding: 0 1.1em; border: 1px solid var(--hairline); border-radius: 999px; background: transparent; font: inherit; font-size: var(--text-sm); color: var(--ink); cursor: pointer; }
+  .boh-pill:hover { border-color: var(--accent); }
+  .boh-pill[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+
+  @media (max-width: 52em) {
+    .boh { grid-template-columns: 1fr; }
+    .boh-card { position: static; }
+    .boh-invoice { grid-template-columns: 1fr; }
+  }
+  @media print {
+    .boh-form .boh-link, .boh-actions, .boh-save, .boh-saved-note, .boh-rowact, .boh-chips--small { display: none !important; }
+    .boh-card { position: static; }
+    .boh-fold > summary::after { display: none; }
+  }
+</style>
