@@ -1,7 +1,8 @@
 {
-  "_readme": "Back of house, Winter in Styal: what the couple pays and how it splits between Follow the Smoke, Special Days and Styal Lodge. Figures come from the owner's two sheets of 23 November 2026 and include VAT. Follow the Smoke is not VAT registered: its rates below are as given, including VAT, and the page takes VAT off (ftsVatRate) per head, to the penny. The Lodge share is the couple's price minus the two supplier shares. To change a rate, change it here only.",
+  "_readme": "Back of house, Winter in Styal: what the couple pays and how it splits between Follow the Smoke, Special Days and Styal Lodge. Figures come from the owner's two sheets of 23 November 2026 and include VAT. Follow the Smoke is not VAT registered: its rates below are as given, including VAT, and the page takes VAT off (ftsVatRate) per head, to the penny. A deposit (ftsDeposit) is paid to Follow the Smoke up front for every wedding and comes off its total to pay; Special Days takes none. The Lodge share is the couple's price minus the two supplier shares. To change a rate, change it here only.",
   "includedGuests": 50,
   "ftsVatRate": 0.2,
+  "ftsDeposit": 300,
   "suppliers": {
     "fts": "Follow the Smoke",
     "sd": "Special Days",
