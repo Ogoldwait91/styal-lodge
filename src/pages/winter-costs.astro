@@ -10,6 +10,13 @@ import Base from "../layouts/Base.astro";
 import rates from "../data/back-of-house.json";
 
 const years = Object.keys(rates.years);
+// Package and extra guests are invoiced separately, so each supplier has two invoices to check.
+const INVOICES = [
+  { id: "ftsBase", label: `${rates.suppliers.fts}: package invoice` },
+  { id: "ftsExtra", label: `${rates.suppliers.fts}: extra guests invoice` },
+  { id: "sdBase", label: `${rates.suppliers.sd}: package invoice` },
+  { id: "sdExtra", label: `${rates.suppliers.sd}: extra guests invoice` },
+];
 ---
 <Base
   title="Back of house — Styal Lodge"
@@ -66,9 +73,19 @@ const years = Object.keys(rates.years);
       <!-- ============ Where the money goes ============ -->
       <section class="boh-card" id="result" aria-live="polite">
         <p class="eyebrow">Where the money goes</p>
+        <div class="boh-split">
+          <p class="boh-split__who">{rates.suppliers.fts} <small>no VAT</small></p>
+          <dl>
+            <div><dt>Package</dt><dd data-out="ftsBase"></dd></div>
+            <div><dt>Extra guests</dt><dd data-out="ftsExtra"></dd></div>
+          </dl>
+          <p class="boh-split__who">{rates.suppliers.sd}</p>
+          <dl>
+            <div><dt>Package</dt><dd data-out="sdBase"></dd></div>
+            <div><dt>Extra guests</dt><dd data-out="sdExtra"></dd></div>
+          </dl>
+        </div>
         <dl class="boh-three">
-          <div><dt>{rates.suppliers.fts}</dt><dd data-out="fts"></dd></div>
-          <div><dt>{rates.suppliers.sd}</dt><dd data-out="sd"></dd></div>
           <div class="boh-three__lodge"><dt>{rates.suppliers.lodge} keeps</dt><dd data-out="lodge"></dd></div>
         </dl>
         <p class="boh-paid"><span>The couple paid</span><strong data-out="paid"></strong></p>
@@ -98,14 +115,14 @@ const years = Object.keys(rates.years);
       <details class="boh-fold" data-fold="invoice">
         <summary><span>Check an invoice</span><span class="boh-fold__value" data-out="invoice-summary"></span></summary>
         <div class="boh-fold__body">
-          {(["fts", "sd"] as const).map((k) => (
-            <div class="boh-invoice">
+          {INVOICES.map((v) => (
+            <div class="boh-invoice" data-invoice={v.id}>
               <div>
-                <label for={`inv-${k}`}>{rates.suppliers[k]} invoice total</label>
-                <p class="boh-hint" data-out={`${k}-expected`}></p>
+                <label for={`inv-${v.id}`}>{v.label}</label>
+                <p class="boh-hint" data-out={`${v.id}-expected`}></p>
               </div>
-              <div class="boh-money"><span>£</span><input id={`inv-${k}`} name={`inv-${k}`} type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" /></div>
-              <p class="boh-verdict" data-out={`${k}-verdict`} role="status"></p>
+              <div class="boh-money"><span>£</span><input id={`inv-${v.id}`} name={`inv-${v.id}`} type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" /></div>
+              <p class="boh-verdict" data-out={`${v.id}-verdict`} role="status"></p>
             </div>
           ))}
         </div>
@@ -121,7 +138,7 @@ const years = Object.keys(rates.years);
               <tfoot data-out="foot"></tfoot>
             </table>
           </div>
-          <p class="boh-hint">All figures include VAT. What the Lodge keeps is before drinks, styling, staff and its other costs.</p>
+          <p class="boh-hint">{rates.suppliers.fts} is not VAT registered, so its figures are shown without VAT. Everything else includes VAT. What the Lodge keeps is before drinks, styling, staff and its other costs.</p>
         </div>
       </details>
 
@@ -175,7 +192,13 @@ const years = Object.keys(rates.years);
   const thisYear = String(new Date().getFullYear());
   const blank = () => ({ year: YEARS.includes(thisYear) ? thisYear : YEARS[0], day: R.dayTypes[1].id as string, adultDay: 0, childDay: 0, adultEve: 0, childEve: 0 });
   const state: any = blank();
-  let invoices: { fts: string; sd: string } = { fts: "", sd: "" };
+  const INV = ["ftsBase", "ftsExtra", "sdBase", "sdExtra"] as const;
+  type Inv = Record<(typeof INV)[number], string>;
+  const noInvoices = (): Inv => ({ ftsBase: "", ftsExtra: "", sdBase: "", sdExtra: "" });
+  let invoices: Inv = noInvoices();
+  // Follow the Smoke is not VAT registered. Its rates in the data file include VAT, so VAT comes off here, per head, to the penny.
+  const p2 = (n: number) => Math.round(n * 100) / 100;
+  const ftsRate = (incVat: number) => p2(incVat / (1 + R.ftsVatRate));
   let openId: string | null = null;      // the saved wedding currently open, if any
   let filter = "all";
 
@@ -192,24 +215,25 @@ const years = Object.keys(rates.years);
   function work(s: any) {
     const y = R.years[s.year], inc = R.includedGuests;
     const rows: { label: string; detail: string; paid: number; fts: number; sd: number; lodge: number }[] = [];
-    const add = (label: string, detail: string, paid: number, fts: number, sd: number) => rows.push({ label, detail, paid, fts, sd, lodge: paid - fts - sd });
-    add(`Package for ${inc} guests`, `${R.dayTypes.find((d: any) => d.id === s.day).label}, ${s.year}`, y.package[s.day], inc * y.package.ftsPerHead, inc * y.package.sdPerHead);
+    const add = (label: string, detail: string, paid: number, fts: number, sd: number) => rows.push({ label, detail, paid, fts: p2(fts), sd: p2(sd), lodge: p2(paid - p2(fts) - p2(sd)) });
+    add(`Package for ${inc} guests`, `${R.dayTypes.find((d: any) => d.id === s.day).label}, ${s.year}`, y.package[s.day], inc * ftsRate(y.package.ftsPerHead), inc * y.package.sdPerHead);
     for (const g of R.guestTypes) {
       const n = s[g.id], x = y.extras[g.id];
-      if (n > 0) add(`${g.label}: ${g.child ? "children" : "adults"}`, `${n} at ${money(x.price)}`, n * x.price, n * x.fts, n * x.sd);
+      if (n > 0) add(`${g.label}: ${g.child ? "children" : "adults"}`, `${n} at ${money(x.price)}`, n * x.price, n * ftsRate(x.fts), n * x.sd);
     }
-    const sum = (k: "paid" | "fts" | "sd" | "lodge") => Math.round(rows.reduce((t, r) => t + r[k], 0) * 100) / 100;
-    return { rows, paid: sum("paid"), fts: sum("fts"), sd: sum("sd"), lodge: sum("lodge"), extras: Math.round((sum("paid") - rows[0].paid) * 100) / 100 };
+    const sum = (k: "paid" | "fts" | "sd" | "lodge", from = 0) => p2(rows.slice(from).reduce((t, r) => t + r[k], 0));
+    return { rows, paid: sum("paid"), fts: sum("fts"), sd: sum("sd"), lodge: sum("lodge"), extras: sum("paid", 1),
+      ftsBase: rows[0].fts, ftsExtra: sum("fts", 1), sdBase: rows[0].sd, sdExtra: sum("sd", 1) };
   }
 
-  // what a supplier's invoice should say, in words
-  function expected(s: any, k: "fts" | "sd") {
-    const y = R.years[s.year], bits: string[] = [];
-    const head = k === "fts" ? y.package.ftsPerHead : y.package.sdPerHead;
-    bits.push(`${R.includedGuests} in the package at ${money(head)}`);
+  // what each invoice should say, in words
+  function expected(s: any, id: (typeof INV)[number]) {
+    const y = R.years[s.year], fts = id.startsWith("fts");
+    if (id.endsWith("Base")) return `${R.includedGuests} guests at ${money(fts ? ftsRate(y.package.ftsPerHead) : y.package.sdPerHead)}`;
+    const bits: string[] = [];
     for (const g of R.guestTypes) {
-      const n = s[g.id], rate = y.extras[g.id][k];
-      if (n > 0 && rate > 0) bits.push(`${plural(n, g.child ? "child" : "adult", g.child ? "children" : "adults")} ${g.id.endsWith("Eve") ? "in the evening" : "extra in the day"} at ${money(rate)}`);
+      const n = s[g.id], rate = fts ? ftsRate(y.extras[g.id].fts) : y.extras[g.id].sd;
+      if (n > 0 && rate > 0) bits.push(`${plural(n, g.child ? "child" : "adult", g.child ? "children" : "adults")} ${g.id.endsWith("Eve") ? "in the evening" : "in the day"} at ${money(rate)}`);
     }
     return bits.join(", ");
   }
@@ -224,7 +248,7 @@ const years = Object.keys(rates.years);
   }
 
   // ---- saved weddings (this browser only) ----
-  type Saved = { id: string; couple: string; date: string; s: any; inv: { fts: string; sd: string }; at: string };
+  type Saved = { id: string; couple: string; date: string; s: any; inv: Inv; at: string };
   const load = (): Saved[] => { try { const v = JSON.parse(localStorage.getItem(KEY) ?? "[]"); return Array.isArray(v) ? v : []; } catch { return []; } };
   const store = (list: Saved[]) => { try { localStorage.setItem(KEY, JSON.stringify(list)); return true; } catch { return false; } };
 
@@ -232,8 +256,7 @@ const years = Object.keys(rates.years);
     (form.elements.namedItem("year") as RadioNodeList).value = state.year;
     (form.elements.namedItem("day") as RadioNodeList).value = state.day;
     for (const t of TYPES) (form.elements.namedItem(t) as HTMLInputElement).value = String(state[t]);
-    (document.getElementById("inv-fts") as HTMLInputElement).value = invoices.fts;
-    (document.getElementById("inv-sd") as HTMLInputElement).value = invoices.sd;
+    for (const k of INV) (document.getElementById(`inv-${k}`) as HTMLInputElement).value = invoices[k];
     if (state.childDay > 0 || state.childEve > 0) showChildren();
   }
   function showChildren() {
@@ -245,19 +268,20 @@ const years = Object.keys(rates.years);
 
   function render() {
     const w = work(state);
-    $("fts").textContent = money(w.fts); $("sd").textContent = money(w.sd); $("lodge").textContent = money(w.lodge);
+    for (const k of INV) $(k).textContent = money(w[k]);
+    $("lodge").textContent = money(w.lodge);
     $("paid").textContent = money(w.paid);
     $("paid-detail").textContent = w.extras > 0 ? `Package ${money(w.rows[0].paid)} and extra guests ${money(w.extras)}.` : `The package, with no extra guests.`;
 
-    // invoice check
-    let checked = 0, off = 0;
-    for (const k of ["fts", "sd"] as const) {
+    // invoice check: an extra-guests invoice only exists when there are extra guests for that supplier
+    const st = checkAll(state, invoices);
+    for (const k of INV) {
+      const row = document.querySelector<HTMLElement>(`[data-invoice="${k}"]`)!;
+      row.hidden = k.endsWith("Extra") && w[k] === 0;
       $(`${k}-expected`).textContent = `Expected ${money(w[k])}: ${expected(state, k)}.`;
-      const v = verdict(invoices[k], w[k]);
-      const el = $(`${k}-verdict`); el.textContent = v.text; el.dataset.state = v.state;
-      if (v.state) checked++; if (v.state === "off") off++;
+      const v = verdict(invoices[k], w[k]); const el = $(`${k}-verdict`); el.textContent = v.text; el.dataset.state = v.state;
     }
-    $("invoice-summary").textContent = !checked ? "" : off ? `${plural(off, "invoice does", "invoices do")} not match` : checked === 2 ? "Both match" : "Matches";
+    $("invoice-summary").textContent = st.checked ? st.text : "";
 
     // workings
     $("rows").replaceChildren(...w.rows.map((r) => {
@@ -279,13 +303,21 @@ const years = Object.keys(rates.years);
     history.replaceState(null, "", `${location.pathname}?${u}`);
   }
 
-  function invoiceStatus(x: Saved) {
-    const w = work(x.s); const a = verdict(x.inv?.fts ?? "", w.fts).state, b = verdict(x.inv?.sd ?? "", w.sd).state;
-    if (a === "off" || b === "off") return { text: "Does not match", state: "off" };
-    if (a === "ok" && b === "ok") return { text: "Both match", state: "ok" };
-    if (a === "ok" || b === "ok") return { text: "One checked", state: "" };
-    return { text: "Not checked", state: "" };
+  // one line on how a wedding's invoices stand
+  function checkAll(s: any, inv: Partial<Inv> | undefined) {
+    const w = work(s); let due = 0, ok = 0, off = 0;
+    for (const k of INV) {
+      if (k.endsWith("Extra") && w[k] === 0) continue;
+      due++; const v = verdict(inv?.[k] ?? "", w[k]).state;
+      if (v === "ok") ok++; else if (v === "off") off++;
+    }
+    const checked = ok + off;
+    if (off) return { checked, text: `${plural(off, "invoice does", "invoices do")} not match`, state: "off" };
+    if (ok === due) return { checked, text: due === 1 ? "Matches" : "All match", state: "ok" };
+    if (ok) return { checked, text: `${ok} of ${due} checked`, state: "" };
+    return { checked, text: "Not checked", state: "" };
   }
+  const invoiceStatus = (x: Saved) => checkAll(x.s, x.inv);
 
   function renderSaved() {
     const all = load();
@@ -332,7 +364,7 @@ const years = Object.keys(rates.years);
     const k = el.dataset.step!; state[k] = Math.max(0, Math.min(300, state[k] + Number(el.dataset.dir)));
     (form.elements.namedItem(k) as HTMLInputElement).value = String(state[k]); render();
   });
-  for (const k of ["fts", "sd"] as const) document.getElementById(`inv-${k}`)!.addEventListener("input", (e) => { invoices[k] = (e.target as HTMLInputElement).value; render(); });
+  for (const k of INV) document.getElementById(`inv-${k}`)!.addEventListener("input", (e) => { invoices[k] = (e.target as HTMLInputElement).value; render(); });
 
   const savePanel = document.querySelector<HTMLElement>("[data-save]")!;
   const note = (text: string) => { $("saved-note").textContent = text; };
@@ -359,7 +391,7 @@ const years = Object.keys(rates.years);
     render();
   });
   document.querySelector("[data-reset]")!.addEventListener("click", () => {
-    Object.assign(state, blank()); invoices = { fts: "", sd: "" }; openId = null; savePanel.hidden = true; note("");
+    Object.assign(state, blank()); invoices = noInvoices(); openId = null; savePanel.hidden = true; note("");
     syncInputs(); render(); window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
@@ -369,7 +401,7 @@ const years = Object.keys(rates.years);
     if (el.dataset.filter) { filter = el.dataset.filter; renderSaved(); return; }
     if (el.dataset.open) {
       const x = load().find((v) => v.id === el.dataset.open); if (!x) return;
-      Object.assign(state, blank(), x.s); invoices = { fts: x.inv?.fts ?? "", sd: x.inv?.sd ?? "" }; openId = x.id; savePanel.hidden = true;
+      Object.assign(state, blank(), x.s); invoices = { ...noInvoices(), ...Object.fromEntries(INV.map((k) => [k, x.inv?.[k] ?? ""])) } as Inv; openId = x.id; savePanel.hidden = true;
       note(`Opened ${x.couple || "the saved wedding"}. Change anything, then "Save changes".`);
       syncInputs(); render(); window.scrollTo({ top: 0, behavior: "smooth" }); return;
     }
@@ -386,8 +418,8 @@ const years = Object.keys(rates.years);
     }
     if (el.hasAttribute("data-download")) {
       const esc = (v: unknown) => { const s = String(v ?? ""); return /^[=+\-@]/.test(s) ? `"'${s.replace(/"/g, '""')}"` : `"${s.replace(/"/g, '""')}"`; };
-      const head = ["Couple", "Wedding date", "Year", "Day", "Extra adult day", "Extra child day", "Adult evening", "Child evening", "Couple paid", "Follow the Smoke", "Special Days", "Styal Lodge keeps", "Follow the Smoke invoice", "Special Days invoice", "Invoices", "Saved"];
-      const lines = load().map((x) => { const w = work(x.s); return [x.couple, x.date, x.s.year, R.dayTypes.find((d: any) => d.id === x.s.day).label, x.s.adultDay, x.s.childDay, x.s.adultEve, x.s.childEve, w.paid.toFixed(2), w.fts.toFixed(2), w.sd.toFixed(2), w.lodge.toFixed(2), parseMoney(x.inv?.fts ?? "")?.toFixed(2) ?? "", parseMoney(x.inv?.sd ?? "")?.toFixed(2) ?? "", invoiceStatus(x).text, x.at.slice(0, 10)].map(esc).join(","); });
+      const head = ["Couple", "Wedding date", "Year", "Day", "Extra adult day", "Extra child day", "Adult evening", "Child evening", "Couple paid", "Follow the Smoke package (no VAT)", "Follow the Smoke extra guests (no VAT)", "Special Days package", "Special Days extra guests", "Styal Lodge keeps", "Invoices", "Saved"];
+      const lines = load().map((x) => { const w = work(x.s); return [x.couple, x.date, x.s.year, R.dayTypes.find((d: any) => d.id === x.s.day).label, x.s.adultDay, x.s.childDay, x.s.adultEve, x.s.childEve, w.paid.toFixed(2), w.ftsBase.toFixed(2), w.ftsExtra.toFixed(2), w.sdBase.toFixed(2), w.sdExtra.toFixed(2), w.lodge.toFixed(2), invoiceStatus(x).text, x.at.slice(0, 10)].map(esc).join(","); });
       const blob = new Blob(["﻿" + [head.map(esc).join(","), ...lines].join("\r\n")], { type: "text/csv;charset=utf-8" });
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `styal-lodge-winter-weddings-${new Date().toISOString().slice(0, 10)}.csv`;
       document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
@@ -398,17 +430,17 @@ const years = Object.keys(rates.years);
 </script>
 
 <style is:global>
-  .boh-page { --header-h: 0px; padding: clamp(1.5rem, 3.5vw, 2.75rem) 0 calc(var(--stack-gap) * 1.5); }
+  .boh-page { --header-h: 0px; padding: clamp(1.25rem, 2.5vw, 2rem) 0 calc(var(--stack-gap) * 1.5); }
   .boh-page [hidden] { display: none !important; }
   .boh-page :is(label, legend, small, button, input, dt, dd, td, th, .boh-hint, .boh-legend) { letter-spacing: 0.01em; }
 
-  .boh-mast { display: grid; justify-items: center; text-align: center; padding-bottom: calc(var(--stack-gap) * .55); }
-  .boh-mast__logo { height: clamp(52px, 5.5vw, 84px); width: auto; margin-bottom: clamp(1rem, 2vw, 1.5rem); }
+  .boh-mast { display: grid; justify-items: center; text-align: center; padding-bottom: calc(var(--stack-gap) * .4); }
+  .boh-mast__logo { height: clamp(44px, 4.2vw, 64px); width: auto; margin-bottom: clamp(.75rem, 1.4vw, 1.1rem); }
   .boh-mast .display { font-size: var(--text-xl); }
-  .boh-mast .eyebrow { margin-bottom: var(--space-xs); }
+  .boh-mast .eyebrow { margin-bottom: var(--space-2xs); }
 
   .boh { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(1.5rem, 5vw, 5rem); align-items: start; max-width: 1080px; }
-  .boh-form { display: grid; gap: var(--space-lg); }
+  .boh-form { display: grid; gap: var(--space-md); }
   .boh-field { border: 0; padding: 0; margin: 0; min-width: 0; display: grid; gap: .7rem; }
   .boh-field > legend, .boh-legend { padding: 0; margin-bottom: .7rem; font-size: var(--text-sm); color: var(--stone); }
   .boh-legend { margin-bottom: 0; }
@@ -439,17 +471,24 @@ const years = Object.keys(rates.years);
   .boh-hint { font-size: var(--text-xs); color: var(--stone); line-height: 1.55; }
 
   /* ---- the answer ---- */
-  .boh-card { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius); padding: clamp(1.25rem, 2.4vw, 2rem); display: grid; gap: .35rem; position: sticky; top: 1.25rem; }
-  .boh-three { display: grid; margin: .5rem 0 0; }
-  .boh-three > div { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: .8rem 0; border-top: 1px solid var(--hairline); }
+  .boh-card { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius); padding: clamp(1.1rem, 2vw, 1.6rem); display: grid; gap: .2rem; position: sticky; top: 1.25rem; }
+  .boh-split { display: grid; margin-top: .4rem; }
+  .boh-split__who { padding-top: .6rem; border-top: 1px solid var(--hairline); font-size: var(--text-base); color: var(--ink); }
+  .boh-split__who small { margin-left: .4em; font-size: var(--text-xs); color: var(--taupe); }
+  .boh-split dl { margin: .05rem 0 .5rem; display: grid; }
+  .boh-split dl > div { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: .1rem 0; }
+  .boh-split dt { font-size: var(--text-sm); color: var(--stone); }
+  .boh-split dd { margin: 0; font-size: var(--text-lg); line-height: 1.2; color: var(--ink-strong); font-variant-numeric: lining-nums; white-space: nowrap; }
+  .boh-three { display: grid; margin: 0; }
+  .boh-three > div { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: .65rem 0; border-top: 1px solid var(--hairline); }
   .boh-three dt { font-size: var(--text-base); color: var(--ink); }
   .boh-three dd { margin: 0; font-size: clamp(1.7rem, 1.3rem + 1.4vw, 2.5rem); line-height: 1; letter-spacing: -0.02em; color: var(--ink-strong); font-variant-numeric: lining-nums; white-space: nowrap; }
   .boh-three__lodge { border-bottom: 1px solid var(--hairline); }
   .boh-three__lodge dt { color: var(--accent-hover); }
   .boh-three__lodge dd { color: var(--accent-hover); }
-  .boh-paid { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-top: .8rem; font-size: var(--text-base); color: var(--stone); }
+  .boh-paid { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-top: .55rem; font-size: var(--text-base); color: var(--stone); }
   .boh-paid strong { font-weight: var(--fw-regular); font-size: var(--text-lg); color: var(--ink-strong); font-variant-numeric: lining-nums; }
-  .boh-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem 1.25rem; margin-top: 1rem; }
+  .boh-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem 1.25rem; margin-top: .7rem; }
   .boh-save { display: grid; gap: .4rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--hairline); }
   .boh-save label { font-size: var(--text-sm); color: var(--stone); margin-top: .3rem; }
   .boh-save input, .boh-money input { min-height: 46px; padding: 0 1rem; font: inherit; font-size: var(--text-base); color: var(--ink); background: transparent; border: 1px solid var(--hairline); border-radius: var(--radius); width: 100%; font-variant-numeric: lining-nums; }
